@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "GetGigs – Venue Artist Matchmap"
+description = "A venue discovery app for independent musicians to find stages that fit their sound, audience, location, and career stage, with explainable match scores, an interactive map, and saved venues."
+version = "1.0.0"
+id = "artifacts/getgigs"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26258
+
+[services.development]
+run = "pnpm --filter @workspace/getgigs run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/getgigs", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/getgigs/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26258"
+BASE_PATH = "/"
