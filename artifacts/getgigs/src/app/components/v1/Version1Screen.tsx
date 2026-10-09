@@ -79,7 +79,7 @@ const ACCENT = "#bd8e3c";
 const PIN_SELECTED = "#ddd864";
 const PIN_BORDER = "#857e38";
 
-export default function Version1Screen({ opportunities, accessMode = "guest", onRequireAuth, noScroll = false, onApply, savedOpportunityIds, onToggleSaved }: { opportunities: Opportunity[]; accessMode?: "guest" | "authenticated" | "demo"; onRequireAuth?: () => void; noScroll?: boolean; onApply: (opportunity: Opportunity) => void; savedOpportunityIds: Set<string>; onToggleSaved: (opportunityId: string) => void }) {
+export default function Version1Screen({ opportunities, accessMode = "guest", onRequireAuth, onSearch, noScroll = false, onApply, savedOpportunityIds, onToggleSaved }: { opportunities: Opportunity[]; accessMode?: "guest" | "authenticated" | "demo"; onRequireAuth?: () => void; onSearch?: (query: string, filters: Record<string, unknown>) => void; noScroll?: boolean; onApply: (opportunity: Opportunity) => void; savedOpportunityIds: Set<string>; onToggleSaved: (opportunityId: string) => void }) {
   const listings = useMemo(() => opportunities.map((opportunity) => ({ ...opportunity, name: opportunity.venueName, match: opportunity.matchScore, coord: opportunity.coordinate })), [opportunities]);
   const [view, setView] = useState<"gallery" | "map">("gallery");
   const [deckIdx, setDeckIdx] = useState(0);
@@ -153,7 +153,7 @@ export default function Version1Screen({ opportunities, accessMode = "guest", on
               onOpen={openOpportunity}
             />
           ) : (
-            <MapView selectedId={selectedId} setSelectedId={setSelectedId} onOpen={openOpportunity} />
+            <MapView selectedId={selectedId} setSelectedId={setSelectedId} onOpen={openOpportunity} onSearch={onSearch} />
           )}
         </div>
 
@@ -793,10 +793,12 @@ function MapView({
   selectedId,
   setSelectedId,
   onOpen,
+  onSearch,
 }: {
   selectedId: string;
   setSelectedId: (id: string) => void;
   onOpen: (opportunity: Opportunity) => void;
+  onSearch?: (query: string, filters: Record<string, unknown>) => void;
 }) {
   const listings = useListings();
   const selected = listings.find((l) => l.id === selectedId) ?? listings[0];
@@ -815,6 +817,7 @@ function MapView({
           }}
           selectedPlaceId={selectedPlaceId}
           onSelectPlace={setSelectedPlaceId}
+          onSearch={onSearch}
         />
       </div>
       <div style={{ padding: "20px 20px 0" }}>
@@ -873,12 +876,14 @@ function MapBox({
   onPlaces,
   selectedPlaceId,
   onSelectPlace,
+  onSearch,
 }: {
   selectedId: string;
   setSelectedId: (id: string) => void;
   onPlaces: (places: LivePlace[]) => void;
   selectedPlaceId: string | null;
   onSelectPlace: (id: string) => void;
+  onSearch?: (query: string, filters: Record<string, unknown>) => void;
 }) {
   const listings = useListings();
   const mapEl = useRef<HTMLDivElement | null>(null);
@@ -1064,6 +1069,7 @@ function MapBox({
   };
 
   const useMyLocation = () => {
+    onSearch?.("bars and live music venues near me", { radiusMiles: 3, source: "current_location" });
     setEmbeddedGoogleQuery("bars and live music venues near me");
     setAreaLabel("your location");
     if (!navigator.geolocation) {
@@ -1089,6 +1095,7 @@ function MapBox({
 
   const searchArea = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    onSearch?.(areaQuery.trim() || "bars and live music venues", { radiusMiles: 3, source: "map" });
     setEmbeddedGoogleQuery(normalizeGoogleMapsQuery(areaQuery));
     setAreaLabel(areaQuery.trim() || "bars and venues near you");
     setMapMessage("Google Maps is open inside GetGigs");
