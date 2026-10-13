@@ -30,11 +30,8 @@ const NAV_ITEMS = [
 
 export default function App() {
   const { configured, loading: authLoading, session, profile: account, signOut, updatePassword, refreshProfile } = useAuth();
-  const [visitorMode, setVisitorMode] = useState<VisitorMode | null>(() => {
-    const value = window.localStorage.getItem("getgigs-visitor-mode-v1");
-    return value === "guest" || value === "demo" ? value : null;
-  });
-  const [section, setSection] = useState<Section>(() => visitorModeFromStorage() === "demo" ? "profile" : "explore");
+  const [visitorMode, setVisitorMode] = useState<VisitorMode | null>(null);
+  const [section, setSection] = useState<Section>("explore");
   const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true, adminLogin: requestedRoleFromPath() === "admin" } : null);
   const [demoStep, setDemoStep] = useState(() => Number(window.localStorage.getItem("getgigs-demo-step-v1") || 0));
   const [applying, setApplying] = useState<Opportunity | null>(null);
@@ -46,6 +43,11 @@ export default function App() {
   const [dataNotice, setDataNotice] = useState("");
   const [siteContent, setSiteContent] = useState<Record<string, string>>({});
   const requestedRole = useMemo(() => requestedRoleFromPath(), []);
+
+  useEffect(() => {
+    if (!requestedRole) window.history.replaceState({}, "", "/");
+    window.localStorage.removeItem("getgigs-visitor-mode-v1");
+  }, [requestedRole]);
 
   const accessMode: ScreenAccessMode | null = session ? "authenticated" : visitorMode;
 

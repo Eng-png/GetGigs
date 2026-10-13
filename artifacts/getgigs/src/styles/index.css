@@ -198,6 +198,14 @@ button, input, textarea, select { max-width: 100%; }
   aspect-ratio: 1 / 1;
   height: auto !important;
 }
+.gg-match-name {
+  transition: color 160ms ease;
+}
+.gg-match-name:hover,
+.gg-match-name:focus-visible,
+.gg-match-name:active {
+  color: #ddd864 !important;
+}
 .gg-square-media {
   aspect-ratio: 1 / 1;
   height: auto !important;

@@ -148,6 +148,7 @@ export default function Version1Screen({ opportunities, accessMode = "guest", on
             <GalleryView
               deckIdx={deckIdx}
               onAdvance={() => setDeckIdx((i) => (i + 1) % Math.max(1, Math.min(listings.length, DECK_IMAGES.length)))}
+              onPrevious={() => setDeckIdx((i) => (i - 1 + Math.max(1, Math.min(listings.length, DECK_IMAGES.length))) % Math.max(1, Math.min(listings.length, DECK_IMAGES.length)))}
               visibleCount={visibleCount}
               onShowMore={() => setVisibleCount(listings.length - 1)}
               onOpen={openOpportunity}
@@ -329,12 +330,14 @@ function Toggle({
 function GalleryView({
   deckIdx,
   onAdvance,
+  onPrevious,
   visibleCount,
   onShowMore,
   onOpen,
 }: {
   deckIdx: number;
   onAdvance: () => void;
+  onPrevious: () => void;
   visibleCount: number;
   onShowMore: () => void;
   onOpen: (opportunity: Opportunity) => void;
@@ -348,7 +351,7 @@ function GalleryView({
     <>
       <Rise delay={0.34} duration={0.35} y={16}>
         <div style={{ display: "flex", justifyContent: "center", marginTop: 25 }}>
-          <FeaturedDeck deckIdx={deckIdx} onAdvance={onAdvance} onOpen={onOpen} />
+          <FeaturedDeck deckIdx={deckIdx} onAdvance={onAdvance} onPrevious={onPrevious} onOpen={onOpen} />
         </div>
       </Rise>
 
@@ -409,10 +412,12 @@ const slotForImage = (imgIdx: number, deckIdx: number): Slot =>
 function FeaturedDeck({
   deckIdx,
   onAdvance,
+  onPrevious,
   onOpen,
 }: {
   deckIdx: number;
   onAdvance: () => void;
+  onPrevious: () => void;
   onOpen: (opportunity: Opportunity) => void;
 }) {
   const listings = useListings();
@@ -426,6 +431,8 @@ function FeaturedDeck({
   const ctrl3 = useAnimationControls();
   const controls = [ctrl0, ctrl1, ctrl2, ctrl3];
   const mountedRef = useRef(false);
+  const pointerStartX = useRef<number | null>(null);
+  const swipedRef = useRef(false);
 
   // Initial load-in: settle each card to its slot.
   useEffect(() => {
@@ -510,17 +517,46 @@ function FeaturedDeck({
     if (animatingRef.current) return;
     onAdvance();
   };
+  const handlePrevious = () => {
+    if (animatingRef.current) return;
+    onPrevious();
+  };
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (swipedRef.current || animatingRef.current) {
+      swipedRef.current = false;
+      return;
+    }
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (event.clientX - bounds.left < bounds.width / 2) handlePrevious();
+    else handleAdvance();
+  };
 
   return (
     <div
       role="group"
       aria-label="Featured venue opportunities"
+      onPointerDown={(event) => {
+        pointerStartX.current = event.clientX;
+        swipedRef.current = false;
+      }}
+      onPointerUp={(event) => {
+        if (pointerStartX.current === null) return;
+        const delta = event.clientX - pointerStartX.current;
+        pointerStartX.current = null;
+        if (Math.abs(delta) < 40) return;
+        swipedRef.current = true;
+        delta < 0 ? handleAdvance() : handlePrevious();
+      }}
+      onPointerCancel={() => {
+        pointerStartX.current = null;
+      }}
       style={{
         background: "transparent",
         padding: 0,
         width: "calc(100% - 40px)",
         height: 370,
         position: "relative",
+        touchAction: "pan-y",
       }}
     >
       {deckListings.map((opportunity, imgIdx) => {
@@ -539,7 +575,7 @@ function FeaturedDeck({
             role={slot === "front" ? "button" : undefined}
             tabIndex={slot === "front" ? 0 : -1}
             aria-label={slot === "front" ? `View ${opportunity.venueName} opportunity` : undefined}
-            onClick={() => slot === "front" && onOpen(opportunity)}
+            onClick={(event) => slot === "front" && handleCardClick(event)}
             onKeyDown={(event) => {
               if (slot === "front" && (event.key === "Enter" || event.key === " ")) onOpen(opportunity);
             }}
@@ -613,9 +649,17 @@ function FeaturedDeck({
                 transition: "opacity 200ms",
               }}
             >
-              <h2 style={{ margin: 0, fontFamily: "'Besley', serif", fontSize: 27, fontWeight: 500, lineHeight: 1.05 }}>
+              <button
+                type="button"
+                className="gg-match-name"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpen(opportunity);
+                }}
+                style={{ margin: 0, padding: 0, border: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
+              >
                 {opportunity.venueName}
-              </h2>
+              </button>
               <p style={{ margin: "7px 0 0", fontFamily: FONT_STACK, fontSize: 11, lineHeight: 1.45 }}>
                 {opportunity.city}, {opportunity.state}<br />
                 {opportunity.opportunityTitle} · {opportunity.date}
@@ -624,26 +668,6 @@ function FeaturedDeck({
           </motion.div>
         );
       })}
-      <button
-        type="button"
-        className="gg-match-card"
-        onClick={handleAdvance}
-        style={{
-          position: "absolute",
-          right: 13,
-          bottom: 1,
-          zIndex: 8,
-          border: "1px solid rgba(0,0,0,.18)",
-          borderRadius: 999,
-          padding: "7px 11px",
-          background: "#fdfaf6",
-          fontFamily: FONT_STACK,
-          fontSize: 10,
-          cursor: "pointer",
-        }}
-      >
-        Next match →
-      </button>
     </div>
   );
 }
@@ -728,7 +752,21 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: (opportuni
           transition: "transform 180ms ease-out",
         }}
       >
-        <p
+        <span
+          className="gg-match-name"
+          role="link"
+          tabIndex={0}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen(listing);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+              onOpen(listing);
+            }
+          }}
           style={{
             margin: 0,
             fontFamily: "'Besley', serif",
@@ -738,7 +776,7 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: (opportuni
           }}
         >
           {listing.venueName}
-        </p>
+        </span>
         <span className="gg-card-location" style={{ fontFamily: FONT_STACK, fontSize: 9, lineHeight: 1.35 }}>{listing.city}, {listing.state}</span>
         <span style={{ fontFamily: FONT_STACK, fontSize: 9, lineHeight: 1.35 }}>{listing.opportunityTitle} · {listing.date}</span>
       </div>
