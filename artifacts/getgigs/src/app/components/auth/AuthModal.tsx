@@ -9,12 +9,13 @@ type Props = {
   mode: AuthMode;
   signupRole?: Exclude<AppRole, "admin">;
   locked?: boolean;
+  adminLogin?: boolean;
   onClose: () => void;
   onAuthenticated: () => void;
   onSwitch: (mode: AuthMode, role?: Exclude<AppRole, "admin">) => void;
 };
 
-export default function AuthModal({ mode, signupRole = "artist", locked, onClose, onAuthenticated, onSwitch }: Props) {
+export default function AuthModal({ mode, signupRole = "artist", locked, adminLogin = false, onClose, onAuthenticated, onSwitch }: Props) {
   const { configured, signIn, signUp, sendPasswordReset } = useAuth();
   const [role, setRole] = useState<Exclude<AppRole, "admin">>(signupRole);
   const [name, setName] = useState("");
@@ -58,13 +59,13 @@ export default function AuthModal({ mode, signupRole = "artist", locked, onClose
     }
   };
 
-  const title = mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your GetGigs account" : "Log in to GetGigs";
+  const title = mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your GetGigs account" : adminLogin ? "Admin login" : "Log in to GetGigs";
   return (
     <div className="gg-modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !locked) onClose(); }}>
       <section className="gg-auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button type="button" className="gg-modal-close" onClick={onClose} aria-label="Close"><X size={18}/></button>
         {mode === "forgot" && <button type="button" className="gg-auth-back" onClick={() => onSwitch("login")}><ArrowLeft size={14}/> Log in</button>}
-        <p className="gg-kicker">{locked ? "Account required" : "Welcome to GetGigs"}</p>
+        <p className="gg-kicker">{adminLogin ? "Administrator access" : locked ? "Account required" : "Welcome to GetGigs"}</p>
         <h2 id="auth-title">{title}</h2>
         <p>{locked ? "Create an account or log in to use this feature." : mode === "forgot" ? "We’ll email you a secure link to choose a new password." : "Your account, profile, and saved items stay with you across devices."}</p>
 

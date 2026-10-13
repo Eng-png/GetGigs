@@ -19,7 +19,7 @@ import { loadArtistProfile, loadPublishedVenues, loadSavedVenueIds, recordSearch
 type Section = "explore" | "saved" | "profile" | "community";
 type VisitorMode = "guest" | "demo";
 type ScreenAccessMode = "guest" | "authenticated" | "demo";
-type AuthDialog = { mode: AuthMode; role?: Exclude<AppRole, "admin">; locked: boolean };
+type AuthDialog = { mode: AuthMode; role?: Exclude<AppRole, "admin">; locked: boolean; adminLogin?: boolean };
 
 const NAV_ITEMS = [
   { id: "explore" as const, label: "Explore", icon: Compass },
@@ -35,7 +35,7 @@ export default function App() {
     return value === "guest" || value === "demo" ? value : null;
   });
   const [section, setSection] = useState<Section>(() => visitorModeFromStorage() === "demo" ? "profile" : "explore");
-  const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true } : null);
+  const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true, adminLogin: requestedRoleFromPath() === "admin" } : null);
   const [demoStep, setDemoStep] = useState(() => Number(window.localStorage.getItem("getgigs-demo-step-v1") || 0));
   const [applying, setApplying] = useState<Opportunity | null>(null);
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(new Set());
@@ -105,7 +105,7 @@ export default function App() {
   if (authLoading) return <div className="gg-auth-loading"><span>GetGigs</span><p>Restoring your account…</p></div>;
   if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin"); window.location.reload(); }}/>;
 
-  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen onSignUpArtist={() => setAuth({ mode:"signup", role:"artist", locked:false })} onSignUpBooker={() => setAuth({ mode:"signup", role:"booker", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onGuest={() => enterVisitor("guest")} onDemo={() => enterVisitor("demo")}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => requestedRole ? undefined : setAuth(null)} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
+  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen onSignUpArtist={() => setAuth({ mode:"signup", role:"artist", locked:false })} onSignUpBooker={() => setAuth({ mode:"signup", role:"booker", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={() => enterVisitor("guest")} onDemo={() => enterVisitor("demo")}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => requestedRole ? undefined : setAuth(null)} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
 
   if (account?.role === "admin") return <main className="yondr-product-shell"><section className="yondr-product-view"><AdminDashboard venues={venues} onVenuesChange={updateVenues}/><AccountMenu accountName={account.display_name||account.email} role="Admin" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;
   if (account?.role === "booker") return <main className="yondr-product-shell"><section className="yondr-product-view"><BookerDashboard account={account}/><AccountMenu accountName={account.display_name||account.email} role="Looking for Artist" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;

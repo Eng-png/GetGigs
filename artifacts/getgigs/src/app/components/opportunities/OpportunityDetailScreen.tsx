@@ -74,7 +74,7 @@ export default function OpportunityDetailScreen({ opportunity, saved, accessMode
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) { return <div style={{ minHeight: 48, display: "grid", gridTemplateColumns: "minmax(110px,.7fr) 1.3fr", alignItems: "center", gap: 16, borderBottom: "1px solid rgba(0,0,0,.15)", fontSize: 10 }}><span style={{ color: "rgba(0,0,0,.48)" }}>{label}</span><strong style={{ fontWeight: 500 }}>{value || "Not listed"}</strong></div>; }
+function DetailRow({ label, value }: { label: string; value: string }) { return <div className={`gg-detail-row gg-detail-row-${label.toLowerCase().replaceAll(" ", "-")}`} style={{ minHeight: 48, display: "grid", gridTemplateColumns: "minmax(110px,.7fr) 1.3fr", alignItems: "center", gap: 16, borderBottom: "1px solid rgba(0,0,0,.15)", fontSize: 10 }}><span style={{ color: "rgba(0,0,0,.48)" }}>{label}</span><strong style={{ fontWeight: 500 }}>{value || "Not listed"}</strong></div>; }
 function Fact({ label, value }: { label: string; value: string }) { return <div><span>{label}</span><strong>{value || "Not listed"}</strong></div>; }
 
 const eyebrow: React.CSSProperties = { color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 1.45, textTransform: "uppercase" };

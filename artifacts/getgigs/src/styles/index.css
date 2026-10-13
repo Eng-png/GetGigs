@@ -175,6 +175,46 @@ button, input, textarea, select { max-width: 100%; }
 .gg-venue-form {
   padding-inline: clamp(16px, 3vw, 48px);
 }
+.gg-admin-login-button {
+  border-color: #11100e !important;
+  background: #11100e !important;
+  color: #fff !important;
+}
+.gg-match-card-scroller {
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.gg-match-card-scroller::-webkit-scrollbar {
+  display: none;
+}
+.gg-match-card-scroller > * {
+  flex: 0 0 clamp(220px, 31vw, 340px);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.gg-match-card {
+  aspect-ratio: 1 / 1;
+  height: auto !important;
+}
+.gg-square-media {
+  aspect-ratio: 1 / 1;
+  height: auto !important;
+}
+.gg-detail-row-location strong,
+.gg-detail-row-genres strong {
+  font-size: clamp(12px, .72rem + .25vw, 16px);
+  line-height: 1.35;
+}
+.gg-artist-image {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.gg-gallery-grid img,
+.gg-gallery-grid > div {
+  aspect-ratio: 1 / 1;
+}
 .gg-admin-page > header,
 .gg-form-top {
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -414,6 +454,16 @@ button, input, textarea, select { max-width: 100%; }
   }
   .gg-detail-actions {
     grid-template-columns: 1fr 1fr;
+  }
+  .gg-match-card-scroller {
+    gap: 12px !important;
+    padding-inline: 16px !important;
+  }
+  .gg-match-card-scroller > * {
+    flex-basis: min(82vw, 320px);
+  }
+  .gg-card-location {
+    font-size: 12px !important;
   }
   .gg-detail-actions .primary {
     grid-column: 1 / -1;

@@ -364,15 +364,16 @@ function GalleryView({
       </Rise>
 
       <div
+        className="gg-match-card-scroller"
         style={{
           padding: "18px 20px 0",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          display: "flex",
           gap: 20,
+          overflowX: "auto",
         }}
       >
         {shown.map((l, i) => (
-          <Rise key={l.id} delay={0.95 + 0.06 * i} duration={0.3}>
+          <Rise key={l.id} delay={0.95 + 0.06 * i} duration={0.3} >
             <ListingCard listing={l} onOpen={onOpen} />
           </Rise>
         ))}
@@ -625,6 +626,7 @@ function FeaturedDeck({
       })}
       <button
         type="button"
+        className="gg-match-card"
         onClick={handleAdvance}
         style={{
           position: "absolute",
@@ -737,7 +739,7 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: (opportuni
         >
           {listing.venueName}
         </p>
-        <span style={{ fontFamily: FONT_STACK, fontSize: 9, lineHeight: 1.35 }}>{listing.city}, {listing.state}</span>
+        <span className="gg-card-location" style={{ fontFamily: FONT_STACK, fontSize: 9, lineHeight: 1.35 }}>{listing.city}, {listing.state}</span>
         <span style={{ fontFamily: FONT_STACK, fontSize: 9, lineHeight: 1.35 }}>{listing.opportunityTitle} · {listing.date}</span>
       </div>
     </button>
