@@ -35,6 +35,16 @@ export type PostedOpportunity = {
   created_at: string;
 };
 
+export type SiteContent = { content_key: string; content_value: string; updated_at: string };
+export type AdminActivity = {
+  id: string;
+  actor_id: string | null;
+  subject_user_id: string | null;
+  activity_type: string;
+  details: Record<string, unknown>;
+  created_at: string;
+};
+
 export async function loadArtistProfile(userId: string): Promise<BookingProfile> {
   const client = requireSupabase();
   const { data, error } = await client.from("artist_profiles").select("profile_data").eq("user_id", userId).maybeSingle();
@@ -94,7 +104,14 @@ export async function saveArtistProfile(userId: string, profile: BookingProfile)
     updated_at: new Date().toISOString(),
   });
   if (preferencesError) throw preferencesError;
+  await logActivity(userId, "profile_updated", { profileCompletion: completion });
   return stored;
+}
+
+export async function loadAdminArtistProfile(userId: string): Promise<BookingProfile> {
+  const { data, error } = await requireSupabase().from("artist_profiles").select("profile_data").eq("user_id", userId).single();
+  if (error) throw error;
+  return { ...EMPTY_PROFILE, ...((data?.profile_data || {}) as Partial<BookingProfile>) };
 }
 
 export async function loadSavedVenueIds(userId: string): Promise<string[]> {
@@ -109,11 +126,83 @@ export async function setVenueSaved(userId: string, venueId: string, saved: bool
     ? await client.from("saved_venues").upsert({ user_id: userId, venue_id: venueId })
     : await client.from("saved_venues").delete().eq("user_id", userId).eq("venue_id", venueId);
   if (result.error) throw result.error;
+  await logActivity(userId, saved ? "venue_saved" : "venue_unsaved", { venueId });
 }
 
 export async function recordSearch(userId: string, searchQuery: string, filters: Record<string, unknown>) {
   const { error } = await requireSupabase().from("search_history").insert({ user_id: userId, search_query: searchQuery, filters });
   if (error) throw error;
+  await logActivity(userId, "search", { query: searchQuery, filters });
+}
+
+export async function logActivity(actorId: string, activityType: string, details: Record<string, unknown> = {}, subjectUserId?: string) {
+  const { error } = await requireSupabase().from("admin_activity").insert({
+    actor_id: actorId,
+    subject_user_id: subjectUserId || actorId,
+    activity_type: activityType,
+    details,
+  });
+  if (error) throw error;
+}
+
+export async function loadSiteContent(): Promise<Record<string, string>> {
+  const { data, error } = await requireSupabase().from("site_content").select("content_key, content_value");
+  if (error) throw error;
+  return Object.fromEntries((data || []).map((row) => [String(row.content_key), String(row.content_value)]));
+}
+
+export async function saveSiteContent(contentKey: string, contentValue: string, userId: string) {
+  const { error } = await requireSupabase().from("site_content").upsert({
+    content_key: contentKey,
+    content_value: contentValue,
+    updated_by: userId,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+  await logActivity(userId, "content_updated", { contentKey });
+}
+
+export async function loadAdminActivity(limit = 100): Promise<AdminActivity[]> {
+  const { data, error } = await requireSupabase().from("admin_activity").select("*").order("created_at", { ascending: false }).limit(limit);
+  if (error) throw error;
+  return (data || []) as AdminActivity[];
+}
+
+export async function updateAdminUser(userId: string, input: Partial<Pick<UserProfile, "display_name" | "city" | "state" | "country" | "account_status" | "role">>, actorId: string) {
+  const { error } = await requireSupabase().from("profiles").update({ ...input, updated_at: new Date().toISOString() }).eq("id", userId);
+  if (error) throw error;
+  await logActivity(actorId, "user_updated", { fields: Object.keys(input) }, userId);
+}
+
+export async function deleteAdminUser(userId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.functions.invoke("delete-user", { body: { userId } });
+  if (error) throw error;
+}
+
+export async function updateAdminArtist(userId: string, profileData: BookingProfile, actorId: string) {
+  const client = requireSupabase();
+  const stored = await uploadEmbeddedProfileMedia(userId, profileData);
+  const { error: profileError } = await client.from("artist_profiles").update({
+    profile_data: stored,
+    profile_completion: profileCompletion(stored),
+    updated_at: new Date().toISOString(),
+  }).eq("user_id", userId);
+  if (profileError) throw profileError;
+  const genres = [stored.genre, ...stored.secondaryGenres.split(",")].map((item) => item.trim()).filter(Boolean);
+  const { error: directoryError } = await client.from("artist_directory").update({
+    artist_name: stored.name,
+    artist_type: stored.artistType,
+    city: stored.city,
+    region: stored.region,
+    genres,
+    bio: stored.oneLineBio || stored.shortBio,
+    profile_photo_url: stored.image,
+    cover_photo_url: stored.bandImage,
+    updated_at: new Date().toISOString(),
+  }).eq("user_id", userId);
+  if (directoryError) throw directoryError;
+  await logActivity(actorId, "artist_updated", { fields: ["profile_data", "directory"] }, userId);
 }
 
 export async function uploadPrivateDocument(userId: string, file: File, label: string) {

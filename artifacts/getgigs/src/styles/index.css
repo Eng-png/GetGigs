@@ -296,6 +296,64 @@ button, input, textarea, select { max-width: 100%; }
 .gg-account-menu > div {
   max-width: calc(100vw - 26px);
 }
+.gg-admin-editor-panel {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px) clamp(16px, 4vw, 48px) 90px;
+  overflow-y: auto;
+}
+.gg-admin-json-editor,
+.gg-content-editor textarea {
+  width: 100%;
+  min-height: 420px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 14px;
+  background: #f4efe7;
+  color: #11100e;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+}
+.gg-admin-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.gg-content-editor {
+  display: grid;
+  gap: 18px;
+}
+.gg-content-editor label {
+  display: grid;
+  gap: 8px;
+}
+.gg-content-editor label > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.gg-content-editor textarea {
+  min-height: 110px;
+  font-family: Inter, sans-serif;
+}
+.gg-content-editor button {
+  justify-self: start;
+}
+.gg-user-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gg-user-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.gg-user-actions .danger {
+  color: #9e241c;
+}
 
 @media (min-width: 600px) {
   .yondr-product-shell {
@@ -495,11 +553,17 @@ button, input, textarea, select { max-width: 100%; }
   .gg-admin-table > div > :nth-child(3) {
     display: none;
   }
+  .gg-user-actions {
+    grid-column: 1 / -1;
+  }
   .gg-auth-modal {
     width: 100%;
     max-height: calc(100dvh - 24px);
     padding: 24px 18px;
     border-radius: 20px;
+  }
+  .gg-admin-media-grid {
+    grid-template-columns: 1fr;
   }
   .gg-modal-layer {
     padding: 12px;

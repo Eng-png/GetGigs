@@ -2,6 +2,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { AppRole, UserProfile } from "../lib/authTypes";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { logActivity } from "../lib/getgigsData";
 
 type SignUpInput = {
   email: string;
@@ -121,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       await loadProfile(data.user.id);
+      await logActivity(data.user.id, "login", { method: "password" });
     },
     sendPasswordReset: async (email) => {
       if (!supabase) throw new Error("Supabase has not been configured for this site yet.");
