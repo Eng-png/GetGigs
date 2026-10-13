@@ -126,7 +126,7 @@ function SavedOpportunityCard({ opportunity, onOpen, onUnsave }: { opportunity: 
   return (
     <article style={{ position: "relative", marginBottom: 12, border: "1px solid rgba(0,0,0,.08)", borderRadius: 17, overflow: "hidden", background: PAPER, boxShadow: "0 7px 22px rgba(0,0,0,.045)" }}>
       <button type="button" onClick={onOpen} aria-label={`Open ${opportunity.venueName}: ${opportunity.opportunityTitle}`} style={{ width: "100%", padding: 12, border: 0, display: "grid", gridTemplateColumns: "98px minmax(0,1fr)", gap: 14, background: "transparent", textAlign: "left", cursor: "pointer" }}>
-        <div style={{ height: 118, borderRadius: 12, background: `url(${opportunity.image}) center/cover no-repeat` }} />
+        <div className="gg-square-media" style={{ height: 118, borderRadius: 12, background: `url(${opportunity.image}) center/cover no-repeat` }} />
         <div style={{ minWidth: 0, paddingRight: 34 }}>
           <span style={{ display: "inline-block", marginBottom: 7, padding: "5px 8px", borderRadius: 999, background: CITRON, fontSize: 10 }}>{opportunity.matchScore}% Match</span>
           <h2 style={{ margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{opportunity.venueName}</h2>

@@ -24,3 +24,15 @@ Sign out and sign in again. The account will now open the admin workspace. There
 6. While signed out, or while using either normal account, open `/admin` directly and confirm access is denied or login is required.
 
 The sample venue cards remain bundled as clearly marked demo records. New admin-created venues are stored in `venues`; their private booking contacts are stored separately in `venue_private_details` so guest API requests cannot retrieve them.
+
+## Admin upgrade
+
+After applying `202610130002_admin_upgrade.sql`, deploy the account deletion function from the repository root:
+
+```bash
+supabase functions deploy delete-user
+```
+
+The function requires Supabase's managed `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` secrets. Never place the service-role key in a `VITE_` environment variable or in browser code.
+
+The administrator workspace then provides private site-content editing, venue management, artist profile/media editing, user status/edit/delete controls, and an activity audit view. Only profiles whose database role is `admin` can use these operations.

@@ -14,12 +14,12 @@ import { useAuth } from "./context/AuthContext";
 import type { AppRole } from "./lib/authTypes";
 import { EMPTY_PROFILE, MAYA_PROFILE, type BookingProfile } from "./data/bookingProfile";
 import { OPPORTUNITIES, type Opportunity } from "./data/opportunities";
-import { loadArtistProfile, loadPublishedVenues, loadSavedVenueIds, recordSearch, saveArtistProfile, setVenueSaved, syncRealVenues, uploadPrivateDocument } from "./lib/getgigsData";
+import { loadArtistProfile, loadPublishedVenues, loadSavedVenueIds, loadSiteContent, recordSearch, saveArtistProfile, setVenueSaved, syncRealVenues, uploadPrivateDocument } from "./lib/getgigsData";
 
 type Section = "explore" | "saved" | "profile" | "community";
 type VisitorMode = "guest" | "demo";
 type ScreenAccessMode = "guest" | "authenticated" | "demo";
-type AuthDialog = { mode: AuthMode; role?: Exclude<AppRole, "admin">; locked: boolean };
+type AuthDialog = { mode: AuthMode; role?: Exclude<AppRole, "admin">; locked: boolean; adminLogin?: boolean };
 
 const NAV_ITEMS = [
   { id: "explore" as const, label: "Explore", icon: Compass },
@@ -30,12 +30,9 @@ const NAV_ITEMS = [
 
 export default function App() {
   const { configured, loading: authLoading, session, profile: account, signOut, updatePassword, refreshProfile } = useAuth();
-  const [visitorMode, setVisitorMode] = useState<VisitorMode | null>(() => {
-    const value = window.localStorage.getItem("getgigs-visitor-mode-v1");
-    return value === "guest" || value === "demo" ? value : null;
-  });
-  const [section, setSection] = useState<Section>(() => visitorModeFromStorage() === "demo" ? "profile" : "explore");
-  const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true } : null);
+  const [visitorMode, setVisitorMode] = useState<VisitorMode | null>(null);
+  const [section, setSection] = useState<Section>("explore");
+  const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true, adminLogin: requestedRoleFromPath() === "admin" } : null);
   const [demoStep, setDemoStep] = useState(() => Number(window.localStorage.getItem("getgigs-demo-step-v1") || 0));
   const [applying, setApplying] = useState<Opportunity | null>(null);
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(new Set());
@@ -44,7 +41,13 @@ export default function App() {
   const [demoProfile, setDemoProfile] = useState(MAYA_PROFILE);
   const [accountMenu, setAccountMenu] = useState(false);
   const [dataNotice, setDataNotice] = useState("");
+  const [siteContent, setSiteContent] = useState<Record<string, string>>({});
   const requestedRole = useMemo(() => requestedRoleFromPath(), []);
+
+  useEffect(() => {
+    if (!requestedRole) window.history.replaceState({}, "", "/");
+    window.localStorage.removeItem("getgigs-visitor-mode-v1");
+  }, [requestedRole]);
 
   const accessMode: ScreenAccessMode | null = session ? "authenticated" : visitorMode;
 
@@ -53,6 +56,17 @@ export default function App() {
     if (!configured) return;
     loadPublishedVenues(account?.role === "artist" || account?.role === "admin").then((real) => setVenues([...OPPORTUNITIES, ...real.filter((venue) => !OPPORTUNITIES.some((sample) => sample.id === venue.id))])).catch(() => undefined);
   }, [configured, account?.role]);
+
+  useEffect(() => {
+    if (!configured) return;
+    void loadSiteContent().then((content) => {
+      setSiteContent(content);
+      const root = document.documentElement;
+      root.style.setProperty("--gg-detail-font-family", content["style.detail.fontFamily"] || "'Google Sans Flex', 'Google Sans', Inter, sans-serif");
+      root.style.setProperty("--gg-detail-font-size", content["style.detail.fontSize"] || "11px");
+      root.style.setProperty("--gg-detail-color", content["style.detail.color"] || "#11100e");
+    }).catch(() => undefined);
+  }, [configured]);
 
   useEffect(() => {
     if (!session || account?.role !== "artist") return;
@@ -105,9 +119,9 @@ export default function App() {
   if (authLoading) return <div className="gg-auth-loading"><span>GetGigs</span><p>Restoring your account…</p></div>;
   if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin"); window.location.reload(); }}/>;
 
-  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen onSignUpArtist={() => setAuth({ mode:"signup", role:"artist", locked:false })} onSignUpBooker={() => setAuth({ mode:"signup", role:"booker", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onGuest={() => enterVisitor("guest")} onDemo={() => enterVisitor("demo")}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => requestedRole ? undefined : setAuth(null)} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
+  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen title={siteContent["welcome.title"]} description={siteContent["welcome.description"]} onSignUpArtist={() => setAuth({ mode:"signup", role:"artist", locked:false })} onSignUpBooker={() => setAuth({ mode:"signup", role:"booker", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={() => enterVisitor("guest")} onDemo={() => enterVisitor("demo")}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => requestedRole ? undefined : setAuth(null)} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
 
-  if (account?.role === "admin") return <main className="yondr-product-shell"><section className="yondr-product-view"><AdminDashboard venues={venues} onVenuesChange={updateVenues}/><AccountMenu accountName={account.display_name||account.email} role="Admin" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;
+  if (account?.role === "admin") return <main className="yondr-product-shell"><section className="yondr-product-view"><AdminDashboard actorId={session?.user.id || ""} venues={venues} onVenuesChange={updateVenues}/><AccountMenu accountName={account.display_name||account.email} role="Admin" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;
   if (account?.role === "booker") return <main className="yondr-product-shell"><section className="yondr-product-view"><BookerDashboard account={account}/><AccountMenu accountName={account.display_name||account.email} role="Looking for Artist" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;
 
   const currentProfile = visitorMode === "demo" ? demoProfile : bookingProfile;
