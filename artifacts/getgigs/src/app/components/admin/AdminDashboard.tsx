@@ -6,10 +6,10 @@ import { loadAdminActivity, loadAdminArtistRows, loadAdminBookerRows, loadAdminU
 import ManageVenuesScreen from "./ManageVenuesScreen";
 import AdminArtistEditor from "./AdminArtistEditor";
 
-type Tab = "dashboard" | "users" | "artists" | "bookers" | "venues" | "opportunities" | "reports" | "manage" | "content" | "activity";
+type Tab = "dashboard" | "users" | "artists" | "bookers" | "venues" | "opportunities" | "reports" | "manage" | "content" | "typography" | "activity";
 
 const TABS: Array<[Tab,string,React.ComponentType<{size?:number}>]> = [
-  ["dashboard","Dashboard",LayoutDashboard],["users","Users",Users],["artists","Artists",Music2],["bookers","Bookers",Building2],["venues","Venues",TicketCheck],["opportunities","Opportunities",Activity],["reports","Reports",ShieldCheck],["manage","Manage Venues",Building2],["content","Site Content",Pencil],["activity","Activity",Activity],
+  ["dashboard","Dashboard",LayoutDashboard],["users","Users",Users],["artists","Artists",Music2],["bookers","Bookers",Building2],["venues","Venues",TicketCheck],["opportunities","Opportunities",Activity],["reports","Reports",ShieldCheck],["manage","Manage Venues",Building2],["content","Site Content",Pencil],["typography","Typography",Pencil],["activity","Activity",Activity],
 ];
 
 export default function AdminDashboard({ venues, onVenuesChange, actorId }: { venues: Opportunity[]; onVenuesChange:(venues:Opportunity[])=>void; actorId: string }) {
@@ -38,6 +38,7 @@ export default function AdminDashboard({ venues, onVenuesChange, actorId }: { ve
     {tab==="opportunities"&&<Placeholder title="Opportunities" copy="Booker-created opportunities are stored per account and available for moderation through database-authorized records."/>}
     {tab==="reports"&&<Placeholder title="Reports" copy="User-submitted platform reports will appear here for administrator review."/>}
     {tab==="content"&&<ContentEditor content={content} actorId={actorId} onSaved={reload}/>}
+    {tab==="typography"&&<TypographyEditor content={content} actorId={actorId} onSaved={reload}/>}
     {tab==="activity"&&<ActivityOverview rows={activity}/>}
   </div></div>;
 }
@@ -50,6 +51,13 @@ function ContentEditor({ content, actorId, onSaved }: { content: Record<string,s
   useEffect(()=>setValues(content),[content]);
   const save=async(key:string)=>{setBusy(true);try{await saveSiteContent(key,values[key]||"",actorId);await onSaved();}finally{setBusy(false);}};
   return <section><div className="gg-role-title"><span className="gg-kicker">Live website copy</span><h2>Site Content</h2><p>These values are stored privately and can be updated without changing application logic.</p></div><div className="gg-content-editor">{Object.entries(values).map(([key,value])=><label key={key}><span>{key}</span><textarea value={value} onChange={event=>setValues(current=>({...current,[key]:event.target.value}))}/><button type="button" className="primary" disabled={busy} onClick={()=>void save(key)}>Save text</button></label>)}</div></section>;
+}
+function TypographyEditor({ content, actorId, onSaved }: { content: Record<string,string>; actorId:string; onSaved:()=>Promise<unknown>|void }) {
+  const [values,setValues]=useState({ family: content["style.detail.fontFamily"] || "'Google Sans Flex', 'Google Sans', Inter, sans-serif", size: content["style.detail.fontSize"] || "11px", color: content["style.detail.color"] || "#11100e" });
+  const [busy,setBusy]=useState(false);
+  useEffect(()=>setValues({ family: content["style.detail.fontFamily"] || "'Google Sans Flex', 'Google Sans', Inter, sans-serif", size: content["style.detail.fontSize"] || "11px", color: content["style.detail.color"] || "#11100e" }),[content]);
+  const save=async()=>{setBusy(true);try{await saveSiteContent("style.detail.fontFamily",values.family,actorId);await saveSiteContent("style.detail.fontSize",values.size,actorId);await saveSiteContent("style.detail.color",values.color,actorId);document.documentElement.style.setProperty("--gg-detail-font-family",values.family);document.documentElement.style.setProperty("--gg-detail-font-size",values.size);document.documentElement.style.setProperty("--gg-detail-color",values.color);await onSaved();}finally{setBusy(false);}};
+  return <section><div className="gg-role-title"><span className="gg-kicker">Venue details styling</span><h2>Typography</h2><p>Controls apply to non-heading labels and values on venue/details pages. Headings keep their existing design.</p></div><div className="gg-typography-editor"><label><span>Font family</span><select value={values.family} onChange={event=>setValues(current=>({...current,family:event.target.value}))}><option value="'Google Sans Flex', 'Google Sans', Inter, sans-serif">Current small/body font</option><option value="Inter, sans-serif">Inter</option><option value="'Besley', serif">Besley</option><option value="system-ui, sans-serif">System UI</option></select></label><label><span>Font size</span><input type="text" value={values.size} onChange={event=>setValues(current=>({...current,size:event.target.value}))} placeholder="11px"/></label><label><span>Text color</span><input type="color" value={/^#[0-9a-f]{6}$/i.test(values.color) ? values.color : "#11100e"} onChange={event=>setValues(current=>({...current,color:event.target.value}))}/></label><button type="button" className="primary" disabled={busy} onClick={()=>void save()}>{busy ? "Saving…" : "Save typography"}</button></div></section>;
 }
 function ActivityOverview({ rows }: { rows: AdminActivity[] }) { return <section><div className="gg-role-title"><span className="gg-kicker">Audit trail</span><h2>User Activity</h2><p>{rows.length} recent events. Sensitive credentials are never recorded.</p></div><div className="gg-admin-table">{rows.map(row=><div key={row.id}><span><strong>{row.activity_type.replaceAll("_"," ")}</strong><small>{row.subject_user_id||"System"}</small></span><span>{JSON.stringify(row.details)}</span><span>{formatDate(row.created_at)}</span></div>)}</div></section>; }
 function DataOverview({title,rows,primary,secondary,fields}:{title:string;rows:Record<string,unknown>[];primary:string;secondary:string;fields:string[]}){return <section><div className="gg-role-title"><span className="gg-kicker">Platform management</span><h2>{title}</h2><p>{rows.length} records</p></div><div className="gg-admin-records">{rows.map((row,index)=><article key={String(row.id||row.user_id||index)}><div><strong>{String(row[primary]||"Not added")}</strong><small>{String(row[secondary]||"")}</small></div><dl>{fields.map(field=><div key={field}><dt>{field.replaceAll("_"," ")}</dt><dd>{Array.isArray(row[field])?(row[field] as unknown[]).join(", "):String(row[field]??"—")}</dd></div>)}</dl></article>)}</div></section>}

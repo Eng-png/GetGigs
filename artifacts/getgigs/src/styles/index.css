@@ -296,6 +296,67 @@ button, input, textarea, select { max-width: 100%; }
 .gg-account-menu > div {
   max-width: calc(100vw - 26px);
 }
+.gg-venue-detail {
+  --gg-detail-font-family: 'Google Sans Flex', 'Google Sans', Inter, sans-serif;
+  --gg-detail-font-size: 11px;
+  --gg-detail-color: #11100e;
+}
+.gg-venue-detail .gg-detail-row,
+.gg-venue-detail .gg-detail-row > *,
+.gg-venue-detail .gg-fact-grid,
+.gg-venue-detail .gg-fact-grid > *,
+.gg-venue-detail .gg-private-label,
+.gg-venue-detail .gg-safety-note,
+.gg-venue-detail .gg-link-row,
+.gg-venue-detail .gg-link-row a,
+.gg-venue-detail > main > p,
+.gg-venue-detail > main > small,
+.gg-venue-detail > div:first-child p,
+.gg-venue-detail .gg-locked-content p,
+.gg-venue-detail .gg-demo-inline span {
+  font-family: var(--gg-detail-font-family) !important;
+  font-size: var(--gg-detail-font-size) !important;
+  color: var(--gg-detail-color) !important;
+}
+.gg-venue-detail .gg-detail-row {
+  line-height: 1.45;
+}
+.gg-venue-detail .gg-fact-grid strong {
+  font: 500 var(--gg-detail-font-size)/1.45 var(--gg-detail-font-family) !important;
+  color: var(--gg-detail-color) !important;
+}
+.gg-venue-detail .gg-detail-row-location strong,
+.gg-venue-detail .gg-detail-row-genres strong {
+  font-size: var(--gg-detail-font-size) !important;
+}
+.gg-typography-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(120px, .7fr) minmax(90px, .4fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+.gg-typography-editor label {
+  display: grid;
+  gap: 6px;
+}
+.gg-typography-editor label > span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.gg-typography-editor input,
+.gg-typography-editor select {
+  min-height: 42px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 10px;
+  background: #f4efe7;
+}
+.gg-typography-editor input[type="color"] {
+  padding: 4px;
+}
 .gg-admin-editor-panel {
   width: min(100%, 1100px);
   margin: 0 auto;
@@ -563,6 +624,9 @@ button, input, textarea, select { max-width: 100%; }
     border-radius: 20px;
   }
   .gg-admin-media-grid {
+    grid-template-columns: 1fr;
+  }
+  .gg-typography-editor {
     grid-template-columns: 1fr;
   }
   .gg-modal-layer {

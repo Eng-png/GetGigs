@@ -19,7 +19,7 @@ export default function OpportunityDetailScreen({ opportunity, saved, accessMode
   };
 
   return (
-    <div data-no-edit style={{ width: "100%", height: "100%", overflowY: "auto", paddingBottom: 116, background: PAPER, color: "#11100e", fontFamily: FONT }}>
+    <div className="gg-venue-detail" data-no-edit style={{ width: "100%", height: "100%", overflowY: "auto", paddingBottom: 116, background: PAPER, color: "#11100e", fontFamily: FONT }}>
       <div style={{ position: "relative", minHeight: "min(62vh, 520px)" }}>
         <SafeImage src={info.coverImage} alt={opportunity.venueName} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}/>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.04) 45%, rgba(0,0,0,.82))" }} />

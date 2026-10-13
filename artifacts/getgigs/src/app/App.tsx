@@ -57,7 +57,13 @@ export default function App() {
 
   useEffect(() => {
     if (!configured) return;
-    void loadSiteContent().then(setSiteContent).catch(() => undefined);
+    void loadSiteContent().then((content) => {
+      setSiteContent(content);
+      const root = document.documentElement;
+      root.style.setProperty("--gg-detail-font-family", content["style.detail.fontFamily"] || "'Google Sans Flex', 'Google Sans', Inter, sans-serif");
+      root.style.setProperty("--gg-detail-font-size", content["style.detail.fontSize"] || "11px");
+      root.style.setProperty("--gg-detail-color", content["style.detail.color"] || "#11100e");
+    }).catch(() => undefined);
   }, [configured]);
 
   useEffect(() => {
