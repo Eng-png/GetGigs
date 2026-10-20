@@ -127,7 +127,7 @@ export default function App() {
   const currentProfile = visitorMode === "demo" ? demoProfile : bookingProfile;
   return <main className="yondr-product-shell"><section className="yondr-product-view" aria-live="polite">
     <div className="yondr-editable-canvas">{applying ? <GigApplicationScreen opportunity={applying} profile={currentProfile} demo={visitorMode === "demo"} onClose={() => setApplying(null)} /> : <>
-      {section === "explore" && <Version1Screen opportunities={venues} accessMode={accessMode} onRequireAuth={requireAuth} onSearch={(query,filters)=>{if(session)void recordSearch(session.user.id,query,filters).catch(()=>undefined)}} onApply={startApplication} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity}/>}
+      {section === "explore" && <Version1Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} onSearch={(query,filters)=>{if(session)void recordSearch(session.user.id,query,filters).catch(()=>undefined)}} onApply={startApplication} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity}/>}
       {section === "saved" && <Version2Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity} onApply={startApplication} onExplore={() => setSection("explore")}/>}
       {section === "profile" && <ArtistBookingProfileScreen profile={currentProfile} onChange={updateBookingProfile} onUploadDocument={session?(file,label)=>uploadPrivateDocument(session.user.id,file,label):undefined}/>}
       {section === "community" && <CommunityScreen/>}

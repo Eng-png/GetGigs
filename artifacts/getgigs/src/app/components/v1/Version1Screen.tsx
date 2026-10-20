@@ -79,7 +79,7 @@ const ACCENT = "#bd8e3c";
 const PIN_SELECTED = "#ddd864";
 const PIN_BORDER = "#857e38";
 
-export default function Version1Screen({ opportunities, accessMode = "guest", onRequireAuth, onSearch, noScroll = false, onApply, savedOpportunityIds, onToggleSaved }: { opportunities: Opportunity[]; accessMode?: "guest" | "authenticated" | "demo"; onRequireAuth?: () => void; onSearch?: (query: string, filters: Record<string, unknown>) => void; noScroll?: boolean; onApply: (opportunity: Opportunity) => void; savedOpportunityIds: Set<string>; onToggleSaved: (opportunityId: string) => void }) {
+export default function Version1Screen({ opportunities, artistName, accessMode = "guest", onRequireAuth, onSearch, noScroll = false, onApply, savedOpportunityIds, onToggleSaved }: { opportunities: Opportunity[]; artistName?: string; accessMode?: "guest" | "authenticated" | "demo"; onRequireAuth?: () => void; onSearch?: (query: string, filters: Record<string, unknown>) => void; noScroll?: boolean; onApply: (opportunity: Opportunity) => void; savedOpportunityIds: Set<string>; onToggleSaved: (opportunityId: string) => void }) {
   const listings = useMemo(() => opportunities.map((opportunity) => ({ ...opportunity, name: opportunity.venueName, match: opportunity.matchScore, coord: opportunity.coordinate })), [opportunities]);
   const [view, setView] = useState<"gallery" | "map">("gallery");
   const [deckIdx, setDeckIdx] = useState(0);
@@ -135,7 +135,7 @@ export default function Version1Screen({ opportunities, accessMode = "guest", on
           }}
         >
           <StatusBar />
-          <TopBar />
+          <TopBar artistName={artistName} />
           <Header />
           <div style={{ height: 18 }} />
           <Rise delay={0.27} duration={0.3}>
@@ -213,7 +213,7 @@ function StatusBar() {
   );
 }
 
-function TopBar() {
+function TopBar({ artistName }: { artistName?: string }) {
   return (
     <div
       style={{
@@ -244,13 +244,11 @@ function TopBar() {
           fontFamily: "'Besley', serif",
           fontSize: 19.17,
           letterSpacing: "-1.15px",
-          width: 53,
+          minWidth: 53,
+          textAlign: "right",
         }}
       >
-        <span style={{ letterSpacing: "-1.92px" }}>Y</span>
-        <span>on</span>
-        <span style={{ letterSpacing: "-0.48px" }}>d</span>
-        <span>r</span>
+        {artistName || "GetGigs"}
       </div>
     </div>
   );
