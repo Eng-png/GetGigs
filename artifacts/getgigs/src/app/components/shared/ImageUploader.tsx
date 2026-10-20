@@ -6,7 +6,7 @@ type Props = {
   label: string;
   value?: string;
   maxMb: number;
-  minimum: { width: number; height?: number };
+  minimum?: { width: number; height?: number };
   recommendation: string;
   onChange: (value: string) => void;
   aspectRatio?: number;
@@ -35,7 +35,7 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
 
   return (
     <div className="gg-upload-card">
-      <div><strong>{label}</strong><p>JPG, JPEG, PNG, or WebP · max {maxMb} MB · minimum {minimum.width} × {minimum.height ?? minimum.width} px<br />{recommendation}</p></div>
+      <div><strong>{label}</strong><p>JPG, JPEG, PNG, or WebP · max {maxMb} MB · any image dimensions<br />{recommendation}</p></div>
       {value ? <SafeImage src={value} alt={`${label} preview`} style={{ width: "100%", height: 170, objectFit: "cover", borderRadius: 14 }} /> : <button type="button" className="gg-upload-drop" onClick={() => inputRef.current?.click()}><ImagePlus size={24}/><span>Choose an image</span></button>}
       <input ref={inputRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void accept(event.target.files?.[0])}/>
       {error && <p className="gg-field-error" role="alert">{error}</p>}
@@ -58,16 +58,16 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
   );
 }
 
-export async function prepareImageFile(file: File, maxMb: number, minimum: { width: number; height?: number }) {
+export async function prepareImageFile(file: File, maxMb: number, minimum?: { width: number; height?: number }) {
   return prepareImageSource(file, maxMb, minimum).then((source) => saveCrop(source, 1, { x: 50, y: 50 }, 1));
 }
 
-async function prepareImageSource(file: File, maxMb: number, minimum: { width: number; height?: number }) {
+async function prepareImageSource(file: File, maxMb: number, minimum?: { width: number; height?: number }) {
   if (!/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error("Choose a JPG, JPEG, PNG, or WebP image.");
   if (file.size > maxMb * 1024 * 1024) throw new Error(`Image must be ${maxMb} MB or smaller.`);
   const dataUrl = await readAsDataUrl(file);
   const size = await readImageSize(dataUrl);
-  if (size.width < minimum.width || (minimum.height && size.height < minimum.height)) {
+  if (minimum && (size.width < minimum.width || (minimum.height && size.height < minimum.height))) {
     throw new Error(`Image must be at least ${minimum.width} × ${minimum.height ?? minimum.width} px.`);
   }
   return dataUrl;
