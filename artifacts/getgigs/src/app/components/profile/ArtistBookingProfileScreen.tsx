@@ -14,6 +14,7 @@ const GOLD = "#bd8e3c";
 export default function ArtistBookingProfileScreen({ profile, onChange, onManageVenues, onUploadDocument }: { profile: BookingProfile; onChange: (profile: BookingProfile) => void | Promise<void>; onManageVenues?: () => void; onUploadDocument?: (file: File, label: string) => Promise<string> }) {
   const firstProfile = useRef(profile);
   const [editing, setEditing] = useState(() => !profile.name && !profile.artistType);
+  const [advancedEditing, setAdvancedEditing] = useState(false);
   const [draft, setDraft] = useState(profile);
   const [bookerView, setBookerView] = useState(false);
   const [notice, setNotice] = useState("");
@@ -62,9 +63,11 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
     <div data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
       <style>{`.booking-profile-scroll::-webkit-scrollbar{display:none}`}</style>
       <div className="booking-profile-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 116 }}>
-        <ProfileHeader profile={profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); }} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
+        <ProfileHeader profile={profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); }} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
 
-        {editing && <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />}
+        {editing && (advancedEditing
+          ? <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
+          : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => setAdvancedEditing(true)} onDone={() => setEditing(false)} onUploadDocument={onUploadDocument} saving={saving} />)}
         {saveError && <div role="alert" style={{ margin: "14px 20px 0", padding: "11px 13px", borderRadius: 12, background: "#f7deda", color: "#812d24", fontSize: 10 }}>{saveError}</div>}
 
         <div style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
@@ -75,7 +78,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
             <SectionAction label="Admin / Manage Venues" icon={<Settings size={12}/>} onClick={onManageVenues} />
           </Section>}
 
-          <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); }} />}>
+          <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); }} />}>
             <InfoGrid rows={[
               ["Artist", profile.name || "Add your artist or band name"], ["Type", profile.artistType || "Not added"], ["Genre", profile.genre || "Not added"], ["Secondary", profile.secondaryGenres || "Not added"], ["Home", [profile.city, profile.region, profile.country].filter(Boolean).join(", ") || "Not added"], ["Pronouns", profile.pronouns || "Not added"], ["Website", profile.website || "Not added"], ["Instagram", profile.instagram || "Not added"], ["Spotify", profile.spotify || "Not added"], ["YouTube", profile.youtube || "Not added"],
             ]} />
@@ -144,6 +147,35 @@ function profileCompletion(profile: BookingProfile) {
 }
 
 function ProfileCompletion({ completion }: { completion: number }) { const items = ["Artist information", "Bio", "Music", "Live performance video", "Booking information", "Performance history", "Availability", "Press kit"]; return <Section eyebrow="Profile readiness" title={`${completion}% Complete`}><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>{items.map((item) => <span key={item} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 9 }}>{completion >= 100 ? <Check size={12} color="#697000" /> : <span style={{ width: 12, textAlign: "center", color: "rgba(0,0,0,.35)" }}>○</span>} {item}</span>)}</div><p style={{ ...helperStyle, marginTop: 15 }}>{completion < 100 ? "Your changes save automatically while you edit." : "Your artist profile is ready to share."}</p></Section>; }
+
+const ARTIST_TYPES = ["Solo artist", "Band", "DJ", "Producer", "Duo", "Other"];
+const GENRES = ["Indie Pop", "Alternative", "Rock", "Pop", "Hip-Hop", "R&B", "Electronic", "Jazz", "Folk", "Country", "Classical", "Other"];
+const COUNTRIES = ["United States", "Canada", "United Kingdom", "Mexico", "Other"];
+const US_STATES = ["MA", "NY", "CA", "TX", "IL", "PA", "FL", "GA", "TN", "WA", "OR", "CO", "Other"];
+
+function QuickProfileEditor({ draft, setDraft, onMore, onDone, onUploadDocument, saving }: { draft: BookingProfile; setDraft: (profile: BookingProfile) => void; onMore: () => void; onDone: () => void; onUploadDocument?: (file: File, label: string) => Promise<string>; saving: boolean }) {
+  const update = (key: keyof BookingProfile, value: string) => setDraft({ ...draft, [key]: value });
+  return <section className="gg-profile-editor gg-quick-profile-editor">
+    <SectionHeading eyebrow="Quick setup" title="Build your artist profile" />
+    <p className="gg-upload-guidance">Start with the basics. Your changes save automatically.</p>
+    <div className="gg-profile-upload-grid">
+      <ImageUploader label="Profile photo (optional)" value={draft.image} maxMb={5} minimum={{ width: 800, height: 800 }} recommendation="Square photo recommended" onChange={(image) => setDraft({ ...draft, image })} />
+    </div>
+    <div className="gg-profile-fields">
+      <label><span style={fieldLabel}>Artist / band name</span><input autoFocus value={draft.name} placeholder="e.g. Bostonbeans" onChange={(event) => update("name", event.target.value)} style={inputStyle} /></label>
+      <label><span style={fieldLabel}>Artist type</span><select value={draft.artistType} onChange={(event) => update("artistType", event.target.value)} style={inputStyle}><option value="">Choose one</option>{ARTIST_TYPES.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span style={fieldLabel}>Main genre</span><select value={draft.genre} onChange={(event) => update("genre", event.target.value)} style={inputStyle}><option value="">Choose one</option>{GENRES.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span style={fieldLabel}>Country</span><select value={draft.country} onChange={(event) => update("country", event.target.value)} style={inputStyle}><option value="">Choose one</option>{COUNTRIES.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span style={fieldLabel}>City</span><input value={draft.city} placeholder="e.g. Boston" onChange={(event) => update("city", event.target.value)} style={inputStyle} /></label>
+      <label><span style={fieldLabel}>State / region</span>{draft.country === "United States" || !draft.country ? <select value={draft.region} onChange={(event) => update("region", event.target.value)} style={inputStyle}><option value="">Choose one</option>{US_STATES.map((item) => <option key={item}>{item}</option>)}</select> : <input value={draft.region} placeholder="State or region" onChange={(event) => update("region", event.target.value)} style={inputStyle} />}</label>
+      <label className="gg-form-wide"><span style={fieldLabel}>One-line bio (optional)</span><textarea rows={3} value={draft.oneLineBio} placeholder="Describe your sound in one sentence." onChange={(event) => update("oneLineBio", event.target.value)} style={inputStyle} /></label>
+    </div>
+    <div style={{ display: "flex", gap: 8, marginTop: 17, flexWrap: "wrap" }}>
+      <button type="button" onClick={onDone} style={lightButton}>{saving ? "Saving…" : "Done"}</button>
+      <button type="button" onClick={onMore} style={{ ...lightButton, background: CITRON, flex: 1, justifyContent: "center" }}>More profile details</button>
+    </div>
+  </section>;
+}
 
 function PerformanceHistory({ profile }: { profile: BookingProfile }) { const count = profile.shows.length; const avgDraw = count ? Math.round(profile.shows.reduce((sum, show) => sum + show.attendance, 0) / count) : 0; const avgFill = count ? Math.round(profile.shows.reduce((sum, show) => sum + show.attendance / show.capacity * 100, 0) / count) : 0; const cities = new Set(profile.shows.map((show) => show.city)).size; return <Section eyebrow="Proof on stage" title="Performance History"><div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 18 }}>{[[avgDraw,"Average Draw"],[`${avgFill}%`,"Avg. Fill"],[count,"Shows"],[cities,"Cities"]].map(([value,label]) => <div key={String(label)} style={{ padding: "13px 7px", borderRadius: 13, background: "#f0ebe3" }}><strong style={{ display: "block", fontFamily: SERIF, fontSize: 18 }}>{value}</strong><small style={{ display: "block", marginTop: 4, fontSize: 7, textTransform: "uppercase" }}>{label}</small></div>)}</div>{count === 0 && <p style={helperStyle}>Add completed shows to build a booker-ready track record.</p>}{profile.shows.map((show) => <div key={`${show.venue}-${show.date}`} style={{ padding: "16px 0", borderTop: "1px solid rgba(0,0,0,.15)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><div><strong style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500 }}>{show.venue}</strong><span style={{ display: "block", marginTop: 4, color: "rgba(0,0,0,.48)", fontSize: 9 }}>{show.city} · {show.date}</span></div><span style={{ fontSize: 8, color: GOLD }}>{show.role}</span></div><div style={{ marginTop: 11, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 7, fontSize: 8 }}><span>Capacity<br/><b>{show.capacity}</b></span><span>Attendance<br/><b>{show.attendance}</b></span><span>Fee<br/><b>{show.fee}</b></span><span>Merch<br/><b>{show.merch}</b></span></div></div>)}</Section>; }
 
