@@ -44,6 +44,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
   const save = async () => { if (await persist(draft, "Booking profile saved")) setEditing(false); };
   const onEditSection = (section: Exclude<EditSection, null>) => { setDraft(profile); setEditing(true); setAdvancedEditing(true); setEditSection(section); };
   const editAction = (section: Exclude<EditSection, null>) => <SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => onEditSection(section)} />;
+  const focusedEditor = (section: Exclude<EditSection, null>) => <FocusedSectionEditor section={section} draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); setEditSection(null); }} onUploadDocument={onUploadDocument} saving={saving} />;
   const copy = async (value: string, label: string) => { await navigator.clipboard?.writeText(value); flash(`${label} copied`); };
 
   useEffect(() => {
@@ -56,11 +57,6 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
   useEffect(() => {
     if (!profile.name && !profile.artistType) setEditing(true);
   }, [profile.name, profile.artistType]);
-
-  useEffect(() => {
-    if (!editing) return;
-    window.requestAnimationFrame(() => editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  }, [editing, advancedEditing]);
 
   useEffect(() => {
     if (!editing || draft === profile) return;
@@ -76,10 +72,9 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
       <div className="booking-profile-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 116 }}>
         <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageError={setSaveError} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
 
-        {editing && <div ref={editorRef}>
+        {editing && !editSection && <div ref={editorRef}>
           {advancedEditing
-            ? editSection ? <FocusedSectionEditor section={editSection} draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); setEditSection(null); }} onUploadDocument={onUploadDocument} saving={saving} />
-            : <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
+            ? <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
             : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => { setEditSection(null); setAdvancedEditing(true); }} onDone={save} onUploadDocument={onUploadDocument} saving={saving} />}
         </div>}
         {saveError && <div role="alert" style={{ margin: "14px 20px 0", padding: "11px 13px", borderRadius: 12, background: "#f7deda", color: "#812d24", fontSize: 10 }}>{saveError}</div>}
@@ -87,57 +82,57 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
         <div style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
           <ProfileCompletion completion={completion} />
 
-          <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); setAdvancedEditing(true); setEditSection("artist"); }} />}>
+          {editSection === "artist" ? focusedEditor("artist") : <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); setAdvancedEditing(true); setEditSection("artist"); }} />}>
             <InfoGrid rows={[
               ["Artist", profile.name || "Add your artist or band name"], ["Type", profile.artistType || "Not added"], ["Genre", profile.genre || "Not added"], ["Secondary", profile.secondaryGenres || "Not added"], ["Home", [profile.city, profile.region, profile.country].filter(Boolean).join(", ") || "Not added"], ["Pronouns", profile.pronouns || "Not added"], ["Website", profile.website || "Not added"], ["Instagram", profile.instagram || "Not added"], ["Spotify", profile.spotify || "Not added"], ["YouTube", profile.youtube || "Not added"],
             ]} />
             <Subheading>Booking contact</Subheading>
             <InfoGrid rows={[["Contact", profile.contactName || "Not added"], ["Artist email", profile.artistEmail || "Not added"], ["Booking email", profile.bookingEmail || "Not added"], ["Phone", profile.phone || "Not added"], ["Manager", profile.managerName || "Not added"], ["Manager email", profile.managerEmail || "Not added"], ["Agent", profile.bookingAgent || "Not added"], ["Agent email", profile.bookingAgentEmail || "Not added"]]} />
-          </Section>
+          </Section>}
 
-          <Section eyebrow="Write once, reuse everywhere" title="Bio" action={editAction("bio")}>
+          {editSection === "bio" ? focusedEditor("bio") : <Section eyebrow="Write once, reuse everywhere" title="Bio" action={editAction("bio")}>
             <BioBlock label="One-line bio" text={profile.oneLineBio} onCopy={() => void copy(profile.oneLineBio, "One-line bio")} />
             <BioBlock label="Short bio · 50–100 words" text={profile.shortBio} onCopy={() => void copy(profile.shortBio, "Short bio")} />
             <BioBlock label="Full bio · 200–300 words" text={profile.fullBio} onCopy={() => void copy(profile.fullBio, "Full bio")} />
-          </Section>
+          </Section>}
 
-          <Section eyebrow="Sound and stage" title="Music & Live" action={editAction("music")}>
+          {editSection === "music" ? focusedEditor("music") : <Section eyebrow="Sound and stage" title="Music & Live" action={editAction("music")}>
             <Subheading>Featured music</Subheading>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 9 }}>
               {profile.tracks.map((track) => <a key={track.title} href={track.spotify} target="_blank" rel="noreferrer" style={{ color: INK, textDecoration: "none" }}><SafeImage src={track.artwork} alt={track.title} style={{ display: "block", width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 13 }} /><strong style={{ display: "block", marginTop: 8, fontFamily: SERIF, fontSize: 13, fontWeight: 500 }}>{track.title}</strong><span style={{ display: "block", marginTop: 3, color: "rgba(0,0,0,.42)", fontSize: 8 }}>Spotify · Apple Music</span></a>)}
             </div>
             <Subheading>Live performance</Subheading>
             {profile.videos.map((video) => <a key={video.title} href={video.url} target="_blank" rel="noreferrer" style={{ position: "relative", display: "block", marginTop: 10, height: video.featured ? 250 : 160, overflow: "hidden", borderRadius: 18, color: PAPER, textDecoration: "none", background: INK }}><SafeImage src={video.thumbnail} alt={video.title} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: .75 }} /><span style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom,transparent,rgba(0,0,0,.82))" }} /><span style={{ position: "absolute", top: 14, left: 14, padding: "7px 9px", borderRadius: 999, background: video.featured ? CITRON : "rgba(0,0,0,.62)", color: video.featured ? INK : PAPER, fontSize: 8 }}>{video.featured ? "Featured Live Video" : "Live video"}</span><span style={{ position: "absolute", left: 15, right: 15, bottom: 14 }}><strong style={{ display: "block", fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{video.title}</strong><small>{video.venue} · {video.date}</small></span><Play size={28} style={{ position: "absolute", top: "46%", left: "47%" }} /></a>)}
-          </Section>
+          </Section>}
 
-          <Section eyebrow="Artist booking details" title="Booking Information" action={editAction("booking")}>
+          {editSection === "booking" ? focusedEditor("booking") : <Section eyebrow="Artist booking details" title="Booking Information" action={editAction("booking")}>
             <VisibilityPill value={profile.feeVisibility} onChange={(value) => onChange({ ...profile, feeVisibility: value })} />
             <InfoGrid rows={[["Formats", profile.performanceFormats.join(" · ") || "Not added"], ["Set lengths", profile.setLengths.join(" · ") || "Not added"], ["Performers", profile.performersCount || "Not added"], ["Local / touring", profile.localOrTouring || "Not added"], ["Preferred cities", profile.preferredCities || "Not added"], ["Venue capacity", profile.preferredVenueCapacity || "Not added"], ["Minimum guarantee", profile.minimumGuarantee || "Optional"], ["Door split", profile.openToDoorSplit ? "Open" : "Not selected"], ["Support slots", profile.openToSupportSlots ? "Open" : "Not selected"], ["Age restrictions", profile.ageRestrictions || "None listed"], ["Typical fee", profile.feeRange || "Not added"]]} />
             <Subheading>Expected audience draw</Subheading>
             <p style={helperStyle}>Estimated number of paying attendees you typically bring to a show.</p>
             {profile.audienceDraw.map((draw) => <div key={draw.city} style={lineRow}><span>{draw.city}</span><strong>{draw.estimate}</strong></div>)}
-          </Section>
+          </Section>}
 
-          <PerformanceHistory profile={profile} action={editAction("history")} />
+          {editSection === "history" ? focusedEditor("history") : <PerformanceHistory profile={profile} action={editAction("history")} />}
 
-          <Section eyebrow="Press materials" title="Press Kit / EPK" action={editAction("press")}>
+          {editSection === "press" ? focusedEditor("press") : <Section eyebrow="Press materials" title="Press Kit / EPK" action={editAction("press")}>
             <div style={{ padding: 18, borderRadius: 18, background: "#f0ebe3" }}><p style={{ margin: 0, fontFamily: SERIF, fontSize: 18 }}>{profile.pressQuotes[0]}</p><p style={{ margin: "14px 0 0", color: "rgba(0,0,0,.52)", fontSize: 10 }}>{profile.notablePerformances.join(" · ")}</p></div>
             <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}><SectionAction label="View EPK" icon={<Eye size={12} />} onClick={() => flash("EPK preview opened")} /><SectionAction label="Share EPK" icon={<Share2 size={12} />} onClick={() => void copy("https://getgigs.com/mayarivers/epk", "EPK link")} /><SectionAction label="Download EPK" icon={<Download size={12} />} onClick={() => flash("EPK download is mocked for this MVP")} /></div>
             <div style={{ marginTop: 15, padding: 13, borderRadius: 12, border: "1px solid rgba(0,0,0,.14)", fontSize: 10 }}>getgigs.com/mayarivers</div>
-          </Section>
+          </Section>}
 
-          <TechnicalRider profile={profile} flash={flash} action={editAction("rider")} />
-          <Availability profile={profile} onChange={onChange} action={editAction("availability")} />
+          {editSection === "rider" ? focusedEditor("rider") : <TechnicalRider profile={profile} flash={flash} action={editAction("rider")} />}
+          {editSection === "availability" ? focusedEditor("availability") : <Availability profile={profile} onChange={onChange} action={editAction("availability")} />}
 
-          <Section eyebrow="The shows you want" title="Gig Preferences" action={editAction("preferences")}>
+          {editSection === "preferences" ? focusedEditor("preferences") : <Section eyebrow="The shows you want" title="Gig Preferences" action={editAction("preferences")}>
             <InfoGrid rows={[["Venue capacity", profile.preferences.capacity], ["Gig types", profile.preferences.gigTypes.join(" · ")], ["Compatible", profile.preferences.compatibleArtists], ["Travel", profile.preferences.travelRadius], ["Cities", profile.preferences.cities], ["Minimum fee", profile.preferences.minimumFee], ["Touring", profile.preferences.touring ? "Available" : "Not available"]]} />
-          </Section>
+          </Section>}
 
-          <Section eyebrow="Privacy system" title="Who sees what" action={editAction("privacy")}>
+          {editSection === "privacy" ? focusedEditor("privacy") : <Section eyebrow="Privacy system" title="Who sees what" action={editAction("privacy")}>
             <PrivacyCard icon={<Eye size={16} />} title="Public" copy="Artist photo, bios, music, videos, social links, selected shows, and press." />
             <PrivacyCard icon={<ShieldCheck size={16} />} title="Bookers Only" copy="Fees, audience draw, availability, rider, booking contact, and hospitality." />
             <PrivacyCard icon={<Lock size={16} />} title="Private" copy="Contracts, payment records, internal notes, and private performance statistics." />
-          </Section>
+          </Section>}
         </div>
         {notice && <div role="status" style={{ position: "fixed", zIndex: 1300, left: "50%", bottom: 94, transform: "translateX(-50%)", padding: "10px 14px", borderRadius: 999, background: INK, color: PAPER, fontSize: 10, whiteSpace: "nowrap" }}>{notice}</div>}
       </div>
