@@ -293,27 +293,7 @@ function profileCompletion(profile: BookingProfile) {
 }
 
 async function uploadEmbeddedProfileMedia(userId: string, profile: BookingProfile): Promise<BookingProfile> {
-  const next = { ...profile };
-  if (next.image.startsWith("data:")) next.image = await uploadDataUrlOrKeep(userId, next.image, "profile");
-  if (next.bandImage.startsWith("data:")) next.bandImage = await uploadDataUrlOrKeep(userId, next.bandImage, "cover");
-  return next;
-}
-
-async function uploadDataUrlOrKeep(userId: string, dataUrl: string, label: string) {
-  try {
-    return await uploadDataUrl(userId, dataUrl, label);
-  } catch {
-    return dataUrl;
-  }
-}
-
-async function uploadDataUrl(userId: string, dataUrl: string, label: string) {
-  const client = requireSupabase();
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
-  const extension = blob.type.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
-  const path = `${userId}/${label}-${Date.now()}.${extension}`;
-  const { error } = await client.storage.from("profile-media").upload(path, blob, { contentType: blob.type, upsert: true });
-  if (error) throw error;
-  return client.storage.from("profile-media").getPublicUrl(path).data.publicUrl;
+  // Cropped profile media is intentionally kept as a compact data URL. This
+  // avoids a broken public-storage URL preventing the saved profile from rendering.
+  return { ...profile };
 }

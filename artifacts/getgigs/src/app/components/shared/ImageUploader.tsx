@@ -76,7 +76,7 @@ async function prepareImageSource(file: File, maxMb: number, minimum?: { width: 
 async function saveCrop(src: string, zoom: number, position: { x: number; y: number }, aspectRatio: number) {
   const size = await readImageSize(src);
   const image = await loadImage(src);
-  const outputWidth = 1200;
+  const outputWidth = 900;
   const outputHeight = Math.round(outputWidth / aspectRatio);
   const cropWidth = Math.min(size.width, size.height * aspectRatio) / zoom;
   const cropHeight = cropWidth / aspectRatio;
@@ -86,7 +86,7 @@ async function saveCrop(src: string, zoom: number, position: { x: number; y: num
   canvas.width = outputWidth;
   canvas.height = outputHeight;
   canvas.getContext("2d")?.drawImage(image, left, top, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
-  return canvas.toDataURL("image/jpeg", .86);
+  return canvas.toDataURL("image/jpeg", .82);
 }
 
 function loadImage(src: string) {
