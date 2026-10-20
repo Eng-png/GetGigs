@@ -54,60 +54,17 @@ export async function loadArtistProfile(userId: string): Promise<BookingProfile>
 
 export async function saveArtistProfile(userId: string, profile: BookingProfile): Promise<BookingProfile> {
   const client = requireSupabase();
-  const { error: ensureError } = await client.rpc("ensure_artist_profile_rows");
-  if (ensureError) throw ensureError;
   const stored = await uploadEmbeddedProfileMedia(userId, profile);
   const completion = profileCompletion(stored);
-  const { error: privateError } = await client.from("artist_profiles").upsert({
-    user_id: userId,
-    profile_data: stored,
-    profile_completion: completion,
-    updated_at: new Date().toISOString(),
-  });
-  if (privateError) throw privateError;
-
   const genres = [stored.genre, ...stored.secondaryGenres.split(",")].map((item) => item.trim()).filter(Boolean);
-  const { error: publicError } = await client.from("artist_directory").upsert({
-    user_id: userId,
-    artist_name: stored.name,
-    artist_type: stored.artistType,
-    city: stored.city,
-    region: stored.region,
-    genres,
-    bio: stored.oneLineBio || stored.shortBio,
-    profile_photo_url: stored.image,
-    cover_photo_url: stored.bandImage,
-    website: stored.website,
-    spotify_url: stored.spotify,
-    youtube_url: stored.youtube,
-    instagram_url: stored.instagram,
-    is_published: Boolean(stored.name),
-    updated_at: new Date().toISOString(),
+  const { data, error } = await client.rpc("save_artist_profile", {
+    profile_input: stored,
+    completion_input: completion,
+    genres_input: genres,
   });
-  if (publicError) throw publicError;
-
-  const { error: profileError } = await client.from("profiles").update({
-    display_name: stored.name,
-    profile_photo_url: stored.image,
-    city: stored.city,
-    state: stored.region,
-    country: stored.country,
-    updated_at: new Date().toISOString(),
-  }).eq("id", userId);
-  if (profileError) throw profileError;
-
-  const { error: preferencesError } = await client.from("user_preferences").upsert({
-    user_id: userId,
-    preferred_genres: genres,
-    preferred_city: stored.preferences.cities || stored.preferredCities || stored.city,
-    preferred_radius: stored.preferences.travelRadius,
-    preferred_capacity: stored.preferences.capacity || stored.preferredVenueCapacity,
-    preferred_gig_types: stored.preferences.gigTypes,
-    updated_at: new Date().toISOString(),
-  });
-  if (preferencesError) throw preferencesError;
+  if (error) throw error;
   await logActivity(userId, "profile_updated", { profileCompletion: completion });
-  return stored;
+  return (data || stored) as BookingProfile;
 }
 
 export async function loadAdminArtistProfile(userId: string): Promise<BookingProfile> {
@@ -333,9 +290,17 @@ function profileCompletion(profile: BookingProfile) {
 
 async function uploadEmbeddedProfileMedia(userId: string, profile: BookingProfile): Promise<BookingProfile> {
   const next = { ...profile };
-  if (next.image.startsWith("data:")) next.image = await uploadDataUrl(userId, next.image, "profile");
-  if (next.bandImage.startsWith("data:")) next.bandImage = await uploadDataUrl(userId, next.bandImage, "cover");
+  if (next.image.startsWith("data:")) next.image = await uploadDataUrlOrKeep(userId, next.image, "profile");
+  if (next.bandImage.startsWith("data:")) next.bandImage = await uploadDataUrlOrKeep(userId, next.bandImage, "cover");
   return next;
+}
+
+async function uploadDataUrlOrKeep(userId: string, dataUrl: string, label: string) {
+  try {
+    return await uploadDataUrl(userId, dataUrl, label);
+  } catch {
+    return dataUrl;
+  }
 }
 
 async function uploadDataUrl(userId: string, dataUrl: string, label: string) {
