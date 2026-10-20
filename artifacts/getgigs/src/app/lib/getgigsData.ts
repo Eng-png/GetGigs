@@ -63,7 +63,11 @@ export async function saveArtistProfile(userId: string, profile: BookingProfile)
     genres_input: genres,
   });
   if (error) throw error;
-  await logActivity(userId, "profile_updated", { profileCompletion: completion });
+  try {
+    await logActivity(userId, "profile_updated", { profileCompletion: completion });
+  } catch (error) {
+    console.warn("Profile saved, but activity logging failed.", error);
+  }
   return (data || stored) as BookingProfile;
 }
 
