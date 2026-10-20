@@ -62,7 +62,7 @@ export async function saveArtistProfile(userId: string, profile: BookingProfile)
     completion_input: completion,
     genres_input: genres,
   });
-  if (error) throw error;
+  if (error) throw new Error(`Profile save failed (${error.code || "supabase"}): ${error.message}`);
   try {
     await logActivity(userId, "profile_updated", { profileCompletion: completion });
   } catch (error) {

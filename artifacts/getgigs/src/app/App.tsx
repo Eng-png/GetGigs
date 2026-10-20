@@ -94,9 +94,17 @@ export default function App() {
     try {
       const saved = await saveArtistProfile(session.user.id, next);
       setBookingProfile(saved);
-      await refreshProfile();
+      try {
+        await refreshProfile();
+      } catch (error) {
+        console.warn("Profile saved, but account header refresh failed.", error);
+      }
       setDataNotice("Profile saved to your account.");
-    } catch (error) { setDataNotice(error instanceof Error ? error.message : "Could not save your profile."); throw error; }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save your profile.";
+      setDataNotice(message);
+      throw new Error(message);
+    }
   };
   const updateVenues = (next: Opportunity[]) => {
     const previous = venues;
