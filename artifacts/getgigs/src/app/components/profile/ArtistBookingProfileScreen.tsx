@@ -21,6 +21,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const editorRef = useRef<HTMLDivElement>(null);
   const completion = profileCompletion(profile);
 
   const flash = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 1800); };
@@ -55,6 +56,11 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
   }, [profile.name, profile.artistType]);
 
   useEffect(() => {
+    if (!editing) return;
+    window.requestAnimationFrame(() => editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [editing, advancedEditing]);
+
+  useEffect(() => {
     if (!editing || draft === profile) return;
     const timer = window.setTimeout(() => void persist(draft), 900);
     return () => window.clearTimeout(timer);
@@ -68,9 +74,11 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
       <div className="booking-profile-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 116 }}>
         <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); }} onImageError={setSaveError} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
 
-        {editing && (advancedEditing
-          ? <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
-          : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => setAdvancedEditing(true)} onDone={save} onUploadDocument={onUploadDocument} saving={saving} />)}
+        {editing && <div ref={editorRef}>
+          {advancedEditing
+            ? <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
+            : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => setAdvancedEditing(true)} onDone={save} onUploadDocument={onUploadDocument} saving={saving} />}
+        </div>}
         {saveError && <div role="alert" style={{ margin: "14px 20px 0", padding: "11px 13px", borderRadius: 12, background: "#f7deda", color: "#812d24", fontSize: 10 }}>{saveError}</div>}
 
         <div style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
