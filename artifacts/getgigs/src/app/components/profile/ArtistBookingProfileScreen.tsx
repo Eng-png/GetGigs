@@ -68,7 +68,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
 
         {editing && (advancedEditing
           ? <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
-          : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => setAdvancedEditing(true)} onDone={() => setEditing(false)} onUploadDocument={onUploadDocument} saving={saving} />)}
+          : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => setAdvancedEditing(true)} onDone={save} onUploadDocument={onUploadDocument} saving={saving} />)}
         {saveError && <div role="alert" style={{ margin: "14px 20px 0", padding: "11px 13px", borderRadius: 12, background: "#f7deda", color: "#812d24", fontSize: 10 }}>{saveError}</div>}
 
         <div style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
