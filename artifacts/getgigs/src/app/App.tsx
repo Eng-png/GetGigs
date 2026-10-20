@@ -45,7 +45,7 @@ export default function App() {
   const requestedRole = useMemo(() => requestedRoleFromPath(), []);
 
   useEffect(() => {
-    if (!requestedRole) window.history.replaceState({}, "", "/");
+    if (!requestedRole) window.history.replaceState({}, "", appPath("/"));
     window.localStorage.removeItem("getgigs-visitor-mode-v1");
   }, [requestedRole]);
 
@@ -78,7 +78,7 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     const route = account.role === "admin" ? "/admin" : account.role === "booker" ? "/booker/discover" : `/artist/${section}`;
-    if (!requestedRole || account.role === requestedRole) window.history.replaceState({}, "", route);
+    if (!requestedRole || account.role === requestedRole) window.history.replaceState({}, "", appPath(route));
   }, [account?.role, section, requestedRole]);
 
   const enterVisitor = (mode: VisitorMode) => {
@@ -86,7 +86,7 @@ export default function App() {
     window.localStorage.setItem("getgigs-visitor-mode-v1", mode);
     setSection(mode === "demo" ? "profile" : "explore");
     if (mode === "demo") { setDemoStep(0); window.localStorage.setItem("getgigs-demo-step-v1", "0"); }
-    window.history.replaceState({}, "", "/");
+    window.history.replaceState({}, "", appPath("/"));
   };
   const updateBookingProfile = async (next: BookingProfile) => {
     if (visitorMode === "demo") { setDemoProfile(next); return; }
@@ -113,11 +113,11 @@ export default function App() {
   const requireAuth = () => setAuth({ mode: "login", locked: true });
   const startApplication = (opportunity: Opportunity) => visitorMode === "guest" ? requireAuth() : setApplying(opportunity);
   const navigate = (next: Section) => { if (next === "profile" && visitorMode === "guest") return requireAuth(); setApplying(null); setSection(next); };
-  const logOut = async () => { await signOut(); setVisitorMode(null); setApplying(null); setAccountMenu(false); window.localStorage.removeItem("getgigs-visitor-mode-v1"); window.history.replaceState({}, "", "/"); };
+  const logOut = async () => { await signOut(); setVisitorMode(null); setApplying(null); setAccountMenu(false); window.localStorage.removeItem("getgigs-visitor-mode-v1"); window.history.replaceState({}, "", appPath("/")); };
 
-  if (window.location.pathname === "/reset-password") return <ResetPasswordScreen onSave={updatePassword} onDone={() => window.location.assign("/")}/>;
+  if (routePath() === "/reset-password") return <ResetPasswordScreen onSave={updatePassword} onDone={() => window.location.assign(appPath("/"))}/>;
   if (authLoading) return <div className="gg-auth-loading"><span>GetGigs</span><p>Restoring your account…</p></div>;
-  if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin"); window.location.reload(); }}/>;
+  if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", appPath(account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin")); window.location.reload(); }}/>;
 
   if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen title={siteContent["welcome.title"]} description={siteContent["welcome.description"]} onSignUpArtist={() => setAuth({ mode:"signup", role:"artist", locked:false })} onSignUpBooker={() => setAuth({ mode:"signup", role:"booker", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={() => enterVisitor("guest")} onDemo={() => enterVisitor("demo")}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => requestedRole ? undefined : setAuth(null)} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
 
@@ -144,4 +144,13 @@ function AccountMenu({accountName,role,open,onToggle,onProfile,onSettings,onLogO
 function AccessDenied({currentRole,requestedRole,onBack}:{currentRole:string;requestedRole:string;onBack:()=>void}) { return <main className="gg-access-denied"><span>403</span><h1>Access denied</h1><p>Your {currentRole} account does not have permission to open the {requestedRole} workspace.</p><button onClick={onBack}>Return to GetGigs</button></main>; }
 function ResetPasswordScreen({onSave,onDone}:{onSave:(password:string)=>Promise<void>;onDone:()=>void}) { const [password,setPassword]=useState("");const [confirm,setConfirm]=useState("");const [message,setMessage]=useState("");const submit=async(e:React.FormEvent)=>{e.preventDefault();if(password.length<8)return setMessage("Use at least 8 characters.");if(password!==confirm)return setMessage("The passwords do not match.");try{await onSave(password);setMessage("Password updated. You can return to GetGigs.");}catch(error){setMessage(error instanceof Error?error.message:"Could not update your password.")}};return <main className="gg-reset-page"><form onSubmit={submit}><span className="gg-kicker">Secure account recovery</span><h1>Choose a new password</h1><label>New password<input type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><label>Confirm password<input type="password" autoComplete="new-password" value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>{message&&<p>{message}</p>}<button className="primary">Update password</button><button type="button" onClick={onDone}>Return to GetGigs</button></form></main>; }
 function visitorModeFromStorage(): VisitorMode | null { const value=window.localStorage.getItem("getgigs-visitor-mode-v1"); return value==="guest"||value==="demo"?value:null; }
-function requestedRoleFromPath(): AppRole | null { const path=window.location.pathname; return path.startsWith("/admin")?"admin":path.startsWith("/booker")?"booker":path.startsWith("/artist")?"artist":null; }
+function appPath(path: string) {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return `${base}${path === "/" ? "/" : path}`;
+}
+function routePath() {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const path = window.location.pathname;
+  return base && path.startsWith(base) ? path.slice(base.length) || "/" : path;
+}
+function requestedRoleFromPath(): AppRole | null { const path=routePath(); return path.startsWith("/admin")?"admin":path.startsWith("/booker")?"booker":path.startsWith("/artist")?"artist":null; }
