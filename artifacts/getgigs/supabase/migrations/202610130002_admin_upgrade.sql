@@ -65,7 +65,7 @@ insert into public.site_content (content_key, content_value)
 values
   ('welcome.title', 'Find the right stage—or the right sound.'),
   ('welcome.description', 'Artists build one booking-ready profile and discover compatible rooms. Venues, promoters, and organizers discover artists ready to play.'),
-  ('style.detail.fontFamily', "'Google Sans Flex', 'Google Sans', Inter, sans-serif"),
+  ('style.detail.fontFamily', '''Google Sans Flex'', ''Google Sans'', Inter, sans-serif'),
   ('style.detail.fontSize', '11px'),
   ('style.detail.color', '#11100e')
 on conflict (content_key) do nothing;
