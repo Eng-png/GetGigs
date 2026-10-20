@@ -20,12 +20,11 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
     setError("");
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return setError("Choose a JPG, JPEG, PNG, or WebP image.");
     if (file.size > maxMb * 1024 * 1024) return setError(`Image must be ${maxMb} MB or smaller.`);
-    const dataUrl = await readAsDataUrl(file);
-    const size = await readImageSize(dataUrl);
-    if (size.width < minimum.width || (minimum.height && size.height < minimum.height)) {
-      return setError(`Image must be at least ${minimum.width} × ${minimum.height ?? minimum.width} px.`);
+    try {
+      onChange(await prepareImageFile(file, maxMb, minimum));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not read this image.");
     }
-    onChange(await compressImage(dataUrl));
   };
 
   return (
@@ -40,6 +39,17 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
       </div>
     </div>
   );
+}
+
+export async function prepareImageFile(file: File, maxMb: number, minimum: { width: number; height?: number }) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error("Choose a JPG, JPEG, PNG, or WebP image.");
+  if (file.size > maxMb * 1024 * 1024) throw new Error(`Image must be ${maxMb} MB or smaller.`);
+  const dataUrl = await readAsDataUrl(file);
+  const size = await readImageSize(dataUrl);
+  if (size.width < minimum.width || (minimum.height && size.height < minimum.height)) {
+    throw new Error(`Image must be at least ${minimum.width} × ${minimum.height ?? minimum.width} px.`);
+  }
+  return compressImage(dataUrl);
 }
 
 function readAsDataUrl(file: File) {

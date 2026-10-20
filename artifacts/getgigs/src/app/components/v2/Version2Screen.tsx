@@ -31,6 +31,7 @@ export default function Version2Screen({
   opportunities,
   accessMode = "guest",
   onRequireAuth,
+  artistName,
 }: {
   noScroll?: boolean;
   savedOpportunityIds: Set<string>;
@@ -40,6 +41,7 @@ export default function Version2Screen({
   opportunities: Opportunity[];
   accessMode?: "guest" | "authenticated" | "demo";
   onRequireAuth?: () => void;
+  artistName?: string;
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selected, setSelected] = useState<Opportunity | null>(null);
@@ -55,7 +57,7 @@ export default function Version2Screen({
       <style>{`.saved-scroll::-webkit-scrollbar,.saved-filters::-webkit-scrollbar{display:none}`}</style>
       <div className="saved-scroll" style={{ position: "absolute", inset: 0, overflowY: noScroll ? "hidden" : "auto", scrollbarWidth: "none", paddingBottom: 112 }}>
         <StatusBar />
-        <TopBar />
+        <TopBar artistName={artistName} />
         <Header count={saved.length} />
 
         {saved.length > 0 ? (
@@ -90,8 +92,8 @@ function StatusBar() {
   return <div style={{ height: 54, padding: "18px 20px 0", display: "flex", justifyContent: "space-between", boxSizing: "border-box", fontSize: 11 }}><span>9:41</span><span style={{ width: 20, height: 12, border: "1.25px solid #000", borderRadius: 8, display: "grid", placeItems: "center" }}><span style={{ width: 10, height: 5, borderRadius: 5, background: "#000" }}/></span></div>;
 }
 
-function TopBar() {
-  return <div style={{ height: 72, padding: "18px 20px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", boxSizing: "border-box" }}><span style={{ fontSize: 14 }}>←</span><span style={{ fontFamily: SERIF, fontSize: 19 }}>Yondr</span></div>;
+function TopBar({ artistName }: { artistName?: string }) {
+  return <div style={{ height: 72, padding: "18px 20px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", boxSizing: "border-box" }}><span style={{ fontSize: 14 }}>←</span><span style={{ fontFamily: SERIF, fontSize: 19 }}>{artistName || "GetGigs"}</span></div>;
 }
 
 function Header({ count }: { count: number }) {
