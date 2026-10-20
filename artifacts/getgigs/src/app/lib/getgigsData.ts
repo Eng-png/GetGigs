@@ -54,6 +54,8 @@ export async function loadArtistProfile(userId: string): Promise<BookingProfile>
 
 export async function saveArtistProfile(userId: string, profile: BookingProfile): Promise<BookingProfile> {
   const client = requireSupabase();
+  const { error: ensureError } = await client.rpc("ensure_artist_profile_rows");
+  if (ensureError) throw ensureError;
   const stored = await uploadEmbeddedProfileMedia(userId, profile);
   const completion = profileCompletion(stored);
   const { error: privateError } = await client.from("artist_profiles").upsert({
