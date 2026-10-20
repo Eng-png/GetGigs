@@ -11,11 +11,13 @@ const PAPER = "#fdfaf6";
 const INK = "#11100e";
 const CITRON = "#e6e83c";
 const GOLD = "#bd8e3c";
+type EditSection = "artist" | "bio" | "music" | "booking" | "history" | "press" | "rider" | "availability" | "preferences" | "privacy" | null;
 
 export default function ArtistBookingProfileScreen({ profile, onChange, onManageVenues, onUploadDocument }: { profile: BookingProfile; onChange: (profile: BookingProfile) => void | Promise<void>; onManageVenues?: () => void; onUploadDocument?: (file: File, label: string) => Promise<string> }) {
   const firstProfile = useRef(profile);
   const [editing, setEditing] = useState(() => !profile.name && !profile.artistType);
   const [advancedEditing, setAdvancedEditing] = useState(false);
+  const [editSection, setEditSection] = useState<EditSection>(null);
   const [draft, setDraft] = useState(profile);
   const [bookerView, setBookerView] = useState(false);
   const [notice, setNotice] = useState("");
@@ -40,8 +42,8 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
     }
   };
   const save = async () => { if (await persist(draft, "Booking profile saved")) setEditing(false); };
-  const onEditSection = () => { setDraft(profile); setEditing(true); setAdvancedEditing(true); };
-  const editAction = () => <SectionAction label="Edit" icon={<Pencil size={12} />} onClick={onEditSection} />;
+  const onEditSection = (section: Exclude<EditSection, null>) => { setDraft(profile); setEditing(true); setAdvancedEditing(true); setEditSection(section); };
+  const editAction = (section: Exclude<EditSection, null>) => <SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => onEditSection(section)} />;
   const copy = async (value: string, label: string) => { await navigator.clipboard?.writeText(value); flash(`${label} copied`); };
 
   useEffect(() => {
@@ -72,19 +74,20 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
     <div data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
       <style>{`.booking-profile-scroll::-webkit-scrollbar{display:none}`}</style>
       <div className="booking-profile-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 116 }}>
-        <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); }} onImageError={setSaveError} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
+        <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageError={setSaveError} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
 
         {editing && <div ref={editorRef}>
           {advancedEditing
-            ? <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
-            : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => setAdvancedEditing(true)} onDone={save} onUploadDocument={onUploadDocument} saving={saving} />}
+            ? editSection ? <FocusedSectionEditor section={editSection} draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); setEditSection(null); }} onUploadDocument={onUploadDocument} saving={saving} />
+            : <EditPanel draft={draft} setDraft={setDraft} onSave={save} onCancel={() => { setDraft(profile); setSaveError(""); setEditing(false); }} onUploadDocument={onUploadDocument} saving={saving} />
+            : <QuickProfileEditor draft={draft} setDraft={setDraft} onMore={() => { setEditSection(null); setAdvancedEditing(true); }} onDone={save} onUploadDocument={onUploadDocument} saving={saving} />}
         </div>}
         {saveError && <div role="alert" style={{ margin: "14px 20px 0", padding: "11px 13px", borderRadius: 12, background: "#f7deda", color: "#812d24", fontSize: 10 }}>{saveError}</div>}
 
         <div style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
           <ProfileCompletion completion={completion} />
 
-          <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); }} />}>
+          <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); setAdvancedEditing(true); setEditSection("artist"); }} />}>
             <InfoGrid rows={[
               ["Artist", profile.name || "Add your artist or band name"], ["Type", profile.artistType || "Not added"], ["Genre", profile.genre || "Not added"], ["Secondary", profile.secondaryGenres || "Not added"], ["Home", [profile.city, profile.region, profile.country].filter(Boolean).join(", ") || "Not added"], ["Pronouns", profile.pronouns || "Not added"], ["Website", profile.website || "Not added"], ["Instagram", profile.instagram || "Not added"], ["Spotify", profile.spotify || "Not added"], ["YouTube", profile.youtube || "Not added"],
             ]} />
@@ -92,13 +95,13 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
             <InfoGrid rows={[["Contact", profile.contactName || "Not added"], ["Artist email", profile.artistEmail || "Not added"], ["Booking email", profile.bookingEmail || "Not added"], ["Phone", profile.phone || "Not added"], ["Manager", profile.managerName || "Not added"], ["Manager email", profile.managerEmail || "Not added"], ["Agent", profile.bookingAgent || "Not added"], ["Agent email", profile.bookingAgentEmail || "Not added"]]} />
           </Section>
 
-          <Section eyebrow="Write once, reuse everywhere" title="Bio" action={editAction()}>
+          <Section eyebrow="Write once, reuse everywhere" title="Bio" action={editAction("bio")}>
             <BioBlock label="One-line bio" text={profile.oneLineBio} onCopy={() => void copy(profile.oneLineBio, "One-line bio")} />
             <BioBlock label="Short bio · 50–100 words" text={profile.shortBio} onCopy={() => void copy(profile.shortBio, "Short bio")} />
             <BioBlock label="Full bio · 200–300 words" text={profile.fullBio} onCopy={() => void copy(profile.fullBio, "Full bio")} />
           </Section>
 
-          <Section eyebrow="Sound and stage" title="Music & Live" action={editAction()}>
+          <Section eyebrow="Sound and stage" title="Music & Live" action={editAction("music")}>
             <Subheading>Featured music</Subheading>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 9 }}>
               {profile.tracks.map((track) => <a key={track.title} href={track.spotify} target="_blank" rel="noreferrer" style={{ color: INK, textDecoration: "none" }}><SafeImage src={track.artwork} alt={track.title} style={{ display: "block", width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 13 }} /><strong style={{ display: "block", marginTop: 8, fontFamily: SERIF, fontSize: 13, fontWeight: 500 }}>{track.title}</strong><span style={{ display: "block", marginTop: 3, color: "rgba(0,0,0,.42)", fontSize: 8 }}>Spotify · Apple Music</span></a>)}
@@ -107,7 +110,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
             {profile.videos.map((video) => <a key={video.title} href={video.url} target="_blank" rel="noreferrer" style={{ position: "relative", display: "block", marginTop: 10, height: video.featured ? 250 : 160, overflow: "hidden", borderRadius: 18, color: PAPER, textDecoration: "none", background: INK }}><SafeImage src={video.thumbnail} alt={video.title} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: .75 }} /><span style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom,transparent,rgba(0,0,0,.82))" }} /><span style={{ position: "absolute", top: 14, left: 14, padding: "7px 9px", borderRadius: 999, background: video.featured ? CITRON : "rgba(0,0,0,.62)", color: video.featured ? INK : PAPER, fontSize: 8 }}>{video.featured ? "Featured Live Video" : "Live video"}</span><span style={{ position: "absolute", left: 15, right: 15, bottom: 14 }}><strong style={{ display: "block", fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{video.title}</strong><small>{video.venue} · {video.date}</small></span><Play size={28} style={{ position: "absolute", top: "46%", left: "47%" }} /></a>)}
           </Section>
 
-          <Section eyebrow="Artist booking details" title="Booking Information" action={editAction()}>
+          <Section eyebrow="Artist booking details" title="Booking Information" action={editAction("booking")}>
             <VisibilityPill value={profile.feeVisibility} onChange={(value) => onChange({ ...profile, feeVisibility: value })} />
             <InfoGrid rows={[["Formats", profile.performanceFormats.join(" · ") || "Not added"], ["Set lengths", profile.setLengths.join(" · ") || "Not added"], ["Performers", profile.performersCount || "Not added"], ["Local / touring", profile.localOrTouring || "Not added"], ["Preferred cities", profile.preferredCities || "Not added"], ["Venue capacity", profile.preferredVenueCapacity || "Not added"], ["Minimum guarantee", profile.minimumGuarantee || "Optional"], ["Door split", profile.openToDoorSplit ? "Open" : "Not selected"], ["Support slots", profile.openToSupportSlots ? "Open" : "Not selected"], ["Age restrictions", profile.ageRestrictions || "None listed"], ["Typical fee", profile.feeRange || "Not added"]]} />
             <Subheading>Expected audience draw</Subheading>
@@ -115,22 +118,22 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
             {profile.audienceDraw.map((draw) => <div key={draw.city} style={lineRow}><span>{draw.city}</span><strong>{draw.estimate}</strong></div>)}
           </Section>
 
-          <PerformanceHistory profile={profile} action={editAction()} />
+          <PerformanceHistory profile={profile} action={editAction("history")} />
 
-          <Section eyebrow="Press materials" title="Press Kit / EPK" action={editAction()}>
+          <Section eyebrow="Press materials" title="Press Kit / EPK" action={editAction("press")}>
             <div style={{ padding: 18, borderRadius: 18, background: "#f0ebe3" }}><p style={{ margin: 0, fontFamily: SERIF, fontSize: 18 }}>{profile.pressQuotes[0]}</p><p style={{ margin: "14px 0 0", color: "rgba(0,0,0,.52)", fontSize: 10 }}>{profile.notablePerformances.join(" · ")}</p></div>
             <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}><SectionAction label="View EPK" icon={<Eye size={12} />} onClick={() => flash("EPK preview opened")} /><SectionAction label="Share EPK" icon={<Share2 size={12} />} onClick={() => void copy("https://getgigs.com/mayarivers/epk", "EPK link")} /><SectionAction label="Download EPK" icon={<Download size={12} />} onClick={() => flash("EPK download is mocked for this MVP")} /></div>
             <div style={{ marginTop: 15, padding: 13, borderRadius: 12, border: "1px solid rgba(0,0,0,.14)", fontSize: 10 }}>getgigs.com/mayarivers</div>
           </Section>
 
-          <TechnicalRider profile={profile} flash={flash} action={editAction()} />
-          <Availability profile={profile} onChange={onChange} action={editAction()} />
+          <TechnicalRider profile={profile} flash={flash} action={editAction("rider")} />
+          <Availability profile={profile} onChange={onChange} action={editAction("availability")} />
 
-          <Section eyebrow="The shows you want" title="Gig Preferences" action={editAction()}>
+          <Section eyebrow="The shows you want" title="Gig Preferences" action={editAction("preferences")}>
             <InfoGrid rows={[["Venue capacity", profile.preferences.capacity], ["Gig types", profile.preferences.gigTypes.join(" · ")], ["Compatible", profile.preferences.compatibleArtists], ["Travel", profile.preferences.travelRadius], ["Cities", profile.preferences.cities], ["Minimum fee", profile.preferences.minimumFee], ["Touring", profile.preferences.touring ? "Available" : "Not available"]]} />
           </Section>
 
-          <Section eyebrow="Privacy system" title="Who sees what" action={editAction()}>
+          <Section eyebrow="Privacy system" title="Who sees what" action={editAction("privacy")}>
             <PrivacyCard icon={<Eye size={16} />} title="Public" copy="Artist photo, bios, music, videos, social links, selected shows, and press." />
             <PrivacyCard icon={<ShieldCheck size={16} />} title="Bookers Only" copy="Fees, audience draw, availability, rider, booking contact, and hospitality." />
             <PrivacyCard icon={<Lock size={16} />} title="Private" copy="Contracts, payment records, internal notes, and private performance statistics." />
@@ -196,6 +199,25 @@ function PerformanceHistory({ profile, action }: { profile: BookingProfile; acti
 function TechnicalRider({ profile, flash, action }: { profile: BookingProfile; flash: (message: string) => void; action?: React.ReactNode }) { return <Section eyebrow="Production details" title="Technical Rider" action={action}><VisibilityPill value="Bookers Only" /><Subheading>Band members</Subheading><p style={helperStyle}>{profile.rider.members.join(" · ")}</p><Subheading>Input list</Subheading>{profile.rider.inputs.map((input) => <div key={input.channel} style={{ ...lineRow, gridTemplateColumns: "32px 1fr 55px", display: "grid" }}><span>{input.channel}</span><strong>{input.instrument}</strong><span>{input.input}</span></div>)}<InfoGrid rows={[["Backline", profile.rider.backline],["Monitors",profile.rider.monitors],["Microphones",profile.rider.microphones],["Lighting",profile.rider.lighting],["Power",profile.rider.power],["Hospitality",profile.rider.hospitality]]} /><label style={{ marginTop: 14, height: 145, border: "1px dashed rgba(0,0,0,.28)", borderRadius: 16, display: "grid", placeItems: "center", color: "rgba(0,0,0,.45)", fontSize: 9, cursor: "pointer" }}><span style={{ display: "grid", justifyItems: "center", gap: 8 }}><Upload size={19} />Upload stage plot</span><input type="file" accept="image/*,.pdf" hidden /></label><div style={{ display: "flex", gap: 8, marginTop: 12 }}><SectionAction label="View Rider" icon={<Eye size={12}/>} onClick={() => flash("Technical rider preview opened")} /><SectionAction label="Share Rider" icon={<Share2 size={12}/>} onClick={() => flash("Rider link copied")} /></div></Section>; }
 
 function Availability({ profile, onChange, action }: { profile: BookingProfile; onChange: (profile: BookingProfile) => void; action?: React.ReactNode }) { const cycle = (index: number) => { const order = ["Available","Tentative","Unavailable"] as const; const availability = [...profile.availability]; availability[index] = { ...availability[index], status: order[(order.indexOf(availability[index].status)+1)%3] }; onChange({ ...profile, availability }); }; return <Section eyebrow="Upcoming dates" title="Availability" action={action}><VisibilityPill value="Bookers Only" /><div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>{profile.availability.map((date,index) => <button key={`${date.month}-${date.date}`} onClick={() => cycle(index)} style={{ minHeight: 78, border: "1px solid rgba(0,0,0,.14)", borderRadius: 14, background: date.status === "Available" ? CITRON : date.status === "Tentative" ? "#efe4cb" : "#ece9e4", color: INK, cursor: "pointer" }}><small style={{ display: "block", fontSize: 7, textTransform: "uppercase" }}>{date.month}</small><strong style={{ display: "block", marginTop: 4, fontFamily: SERIF, fontSize: 22 }}>{date.date}</strong><span style={{ display: "block", marginTop: 3, fontSize: 7 }}>{date.status}</span></button>)}</div><p style={helperStyle}>Tap a date to cycle between Available, Tentative, and Unavailable.</p></Section>; }
+
+function FocusedSectionEditor({ section, draft, setDraft, onSave, onCancel, onUploadDocument, saving }: { section: Exclude<EditSection, null>; draft: BookingProfile; setDraft: (profile: BookingProfile) => void; onSave: () => void; onCancel: () => void; onUploadDocument?: (file: File, label: string) => Promise<string>; saving: boolean }) {
+  const update = <K extends keyof BookingProfile>(key: K, value: BookingProfile[K]) => setDraft({ ...draft, [key]: value });
+  const text = (key: keyof BookingProfile, label: string, multiline = false) => <label className={multiline ? "gg-form-wide" : ""}><span style={fieldLabel}>{label}</span>{multiline ? <textarea rows={5} value={String(draft[key])} onChange={(event) => update(key, event.target.value as BookingProfile[typeof key])} style={inputStyle}/> : <input value={String(draft[key])} onChange={(event) => update(key, event.target.value as BookingProfile[typeof key])} style={inputStyle}/>}</label>;
+  const list = (key: keyof BookingProfile, label: string) => <label className="gg-form-wide"><span style={fieldLabel}>{label} (comma separated)</span><input value={(draft[key] as string[]).join(", ")} onChange={(event) => update(key, event.target.value.split(",").map((item) => item.trim()).filter(Boolean) as BookingProfile[typeof key])} style={inputStyle}/></label>;
+  let title = "Edit section";
+  let fields: React.ReactNode;
+  if (section === "artist") { title = "Artist Information"; fields = <>{text("name", "Artist / band name")}{text("artistType", "Artist type")}{text("genre", "Primary genre")}{text("secondaryGenres", "Secondary genres")}{text("city", "City")}{text("region", "State / region")}{text("country", "Country")}{text("pronouns", "Pronouns")}{text("website", "Website")}{text("instagram", "Instagram")}{text("spotify", "Spotify")}{text("youtube", "YouTube")}</>; }
+  if (section === "bio") { title = "Bio"; fields = <>{text("tagline", "Tagline", true)}{text("oneLineBio", "One-line bio", true)}{text("shortBio", "Short bio", true)}{text("fullBio", "Full bio", true)}</>; }
+  if (section === "music") { title = "Music & Live"; fields = <>{text("spotify", "Spotify")}{text("appleMusic", "Apple Music")}{text("youtube", "YouTube")}{text("soundcloud", "SoundCloud")}{list("performanceFormats", "Performance formats")}{list("setLengths", "Set lengths")}</>; }
+  if (section === "booking") { title = "Booking Information"; fields = <>{text("performersCount", "Number of performers")}{text("localOrTouring", "Local / touring")}{text("preferredCities", "Preferred cities")}{text("preferredVenueCapacity", "Preferred venue capacity")}{text("minimumGuarantee", "Minimum guarantee")}{text("feeRange", "Typical fee range")}{text("bookingEmail", "Booking email")}{text("ageRestrictions", "Age restrictions")}</>; }
+  if (section === "history") { title = "Performance History"; fields = <label className="gg-form-wide"><span style={fieldLabel}>Shows (one per line: venue | city | date | capacity | attendance | fee | merch | role)</span><textarea rows={8} value={draft.shows.map((show) => [show.venue, show.city, show.date, show.capacity, show.attendance, show.fee, show.merch, show.role].join(" | ")).join("\n")} onChange={(event) => update("shows", event.target.value.split("\n").map((line) => line.split("|").map((item) => item.trim())).filter((parts) => parts.length >= 8 && parts[0]).map(([venue, city, date, capacity, attendance, fee, merch, role]) => ({ venue, city, date, capacity: Number(capacity) || 0, attendance: Number(attendance) || 0, tickets: Number(attendance) || 0, fee, merch, role })))} style={inputStyle}/></label>; }
+  if (section === "press") { title = "Press Kit / EPK"; fields = <>{text("epkFile", "EPK file name")}{text("artistLogo", "Artist logo file name")}{list("pressQuotes", "Press quotes")}{list("notablePerformances", "Notable performances")}</>; }
+  if (section === "rider") { title = "Technical Rider"; fields = <>{text("stagePlotFile", "Stage plot file")}{text("techRiderFile", "Technical rider file")}{text("hospitalityRiderFile", "Hospitality rider file")}</>; }
+  if (section === "availability") { title = "Availability"; fields = <label className="gg-form-wide"><span style={fieldLabel}>Dates (one per line: month | date | Available/Tentative/Unavailable)</span><textarea rows={8} value={draft.availability.map((date) => `${date.month} | ${date.date} | ${date.status}`).join("\n")} onChange={(event) => update("availability", event.target.value.split("\n").map((line) => line.split("|").map((item) => item.trim())).filter((parts) => parts.length >= 3 && parts[0]).map(([month, date, status]) => ({ month, date: Number(date) || 1, status: (["Available", "Tentative", "Unavailable"].includes(status) ? status : "Available") as "Available" | "Tentative" | "Unavailable" })))} style={inputStyle}/></label>; }
+  if (section === "preferences") { title = "Gig Preferences"; fields = <>{text("preferredVenueCapacity", "Venue capacity")}{text("preferredCities", "Cities")}{text("minimumGuarantee", "Minimum fee")}{text("localOrTouring", "Travel / touring")}</>; }
+  if (section === "privacy") { title = "Privacy"; fields = <label><span style={fieldLabel}>Fee visibility</span><select value={draft.feeVisibility} onChange={(event) => update("feeVisibility", event.target.value as Visibility)} style={inputStyle}><option>Public</option><option>Bookers Only</option><option>Private</option></select></label>; }
+  return <section className="gg-profile-editor"><SectionHeading eyebrow="Edit one section" title={title}/><p className="gg-upload-guidance">Only this section is being edited. Other profile sections stay unchanged.</p><div className="gg-profile-fields">{fields}</div><div style={{ display: "flex", gap: 8, marginTop: 17 }}><button type="button" onClick={onCancel} style={lightButton}>Cancel</button><button type="button" disabled={saving} onClick={onSave} style={{ ...lightButton, background: CITRON, flex: 1, justifyContent: "center" }}><Save size={13}/>{saving ? "Saving…" : "Save section"}</button></div></section>;
+}
 
 function BookerPreview({ profile, onBack }: { profile: BookingProfile; onBack: () => void }) { const track=profile.tracks[0]; const video=profile.videos[0]; return <div data-no-edit style={{ height: "100%", overflowY: "auto", paddingBottom: 110, background: PAPER, color: INK, fontFamily: FONT }}><section style={{ position: "relative", height: 500, color: PAPER, background: INK }}><SafeImage src={profile.image} alt={profile.name || "Artist"} style={{ width: "100%", height: "100%", objectFit: "cover" }}/><div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent,rgba(0,0,0,.9))" }}/><button onClick={onBack} style={{ ...darkButton, position: "absolute", top: 22, left: 20 }}>← Back</button><div style={{ position: "absolute", left: 22, right: 22, bottom: 24 }}><span style={{ color: CITRON, fontSize: 8, textTransform: "uppercase", letterSpacing: 1.3 }}>Booker view</span><h1 style={{ margin: "8px 0", fontFamily: SERIF, fontSize: 44, fontWeight: 500 }}>{profile.name || "Artist name not added"}</h1><p style={{ margin: 0, fontSize: 9 }}>{profile.genre || "Genre not added"} · {profile.city || "Location not added"}</p><p style={{ margin: "14px 0 0", fontFamily: SERIF, fontSize: 16 }}>{profile.oneLineBio || "Bio not added yet."}</p></div></section><div style={{ padding: "42px 20px", display: "grid", gap: 40 }}>{track ? <Section eyebrow="Featured track" title={track.title}><SafeImage src={track.artwork} alt={track.title} style={{ width: "100%", height: 240, objectFit: "cover", borderRadius: 18 }}/></Section> : <Section eyebrow="Featured track" title="Music not added"><p style={helperStyle}>Add music links from Edit Profile.</p></Section>}{video ? <Section eyebrow="Live" title="Featured performance"><SafeImage src={video.thumbnail} alt={video.title} style={{ width: "100%", height: 240, objectFit: "cover", borderRadius: 18 }}/></Section> : null}<Section eyebrow="Booking fit" title="At a glance"><InfoGrid rows={[["Expected draw",profile.audienceDraw[0]?.estimate || "Not added"],["Formats",profile.performanceFormats.join(" · ") || "Not added"],["Set lengths",profile.setLengths.join(" · ") || "Not added"],["Booking",profile.bookingEmail || "Not added"]]}/></Section><Section eyebrow="Previous shows" title="Track record">{profile.shows.slice(0,3).map(show=><div key={show.venue} style={lineRow}><span>{show.venue}</span><strong>{show.city}</strong></div>)}</Section><div style={{ display: "flex", gap: 8 }}><SectionAction label="View EPK" icon={<FileText size={12}/>} onClick={()=>{}}/><SectionAction label="Technical Rider" icon={<ShieldCheck size={12}/>} onClick={()=>{}}/></div></div></div>; }
 
