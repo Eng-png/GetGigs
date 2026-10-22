@@ -137,7 +137,7 @@ export default function App() {
       {section === "explore" && <Version1Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} onSearch={(query,filters)=>{if(session)void recordSearch(session.user.id,query,filters).catch(()=>undefined)}} onApply={startApplication} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity}/>}
       {section === "saved" && <Version2Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity} onApply={startApplication} onExplore={() => setSection("explore")}/>}
       {section === "profile" && <ArtistBookingProfileScreen profile={currentProfile} onChange={updateBookingProfile} onUploadDocument={session?(file,label)=>uploadPrivateDocument(session.user.id,file,label):undefined}/>}
-      {section === "community" && <CommunityScreen/>}
+      {section === "community" && <CommunityScreen currentUserId={session?.user.id} onRequireAuth={requireAuth}/>}
     </>}</div>
     {dataNotice && <button className="gg-data-notice" onClick={()=>setDataNotice("")}>{dataNotice}</button>}
     {!applying && session && account ? <AccountMenu accountName={account.display_name||account.email} role="Artist" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>{setSection("profile");setAccountMenu(false)}} onSettings={()=>{setSection("profile");setAccountMenu(false)}} onLogOut={()=>void logOut()}/> : !applying && <button type="button" className="gg-session-chip" onClick={() => void logOut()} title="Return to welcome"><span>{visitorMode === "demo" ? "Demo" : "Guest"}</span><LogOut size={12}/></button>}

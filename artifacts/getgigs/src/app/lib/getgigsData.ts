@@ -18,6 +18,20 @@ export type PublicArtist = {
   spotify_url: string;
   youtube_url: string;
   instagram_url: string;
+  performer_count: number;
+  collaboration_interests: string[];
+  availability_public: boolean;
+  next_available_dates: string[];
+  updated_at: string;
+};
+
+export type ConnectionStatus = "pending" | "accepted" | "declined" | "cancelled";
+export type ArtistConnection = {
+  id: string;
+  requester_id: string;
+  recipient_id: string;
+  status: ConnectionStatus;
+  created_at: string;
   updated_at: string;
 };
 
@@ -221,7 +235,7 @@ function emptyBookingInfo(): Opportunity["bookingInfo"] {
 export async function loadPublicArtists(): Promise<PublicArtist[]> {
   const { data, error } = await requireSupabase()
     .from("artist_directory")
-    .select("user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, website, spotify_url, youtube_url, instagram_url, updated_at")
+    .select("user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, website, spotify_url, youtube_url, instagram_url, performer_count, collaboration_interests, availability_public, next_available_dates, updated_at")
     .eq("is_published", true)
     .order("updated_at", { ascending: false });
   if (error) throw error;
@@ -232,6 +246,28 @@ export async function loadSavedArtistIds(userId: string): Promise<string[]> {
   const { data, error } = await requireSupabase().from("saved_artists").select("artist_user_id").eq("user_id", userId);
   if (error) throw error;
   return (data || []).map((row) => String(row.artist_user_id));
+}
+
+export async function loadArtistConnections(userId: string): Promise<ArtistConnection[]> {
+  const { data, error } = await requireSupabase()
+    .from("artist_connections")
+    .select("id, requester_id, recipient_id, status, created_at, updated_at")
+    .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data || []) as ArtistConnection[];
+}
+
+export async function requestArtistConnection(recipientId: string): Promise<ArtistConnection> {
+  const { data, error } = await requireSupabase().rpc("request_artist_connection", { recipient_id_input: recipientId });
+  if (error) throw error;
+  return data as ArtistConnection;
+}
+
+export async function updateArtistConnection(connectionId: string, action: "accept" | "decline" | "cancel"): Promise<ArtistConnection> {
+  const { data, error } = await requireSupabase().rpc("update_artist_connection", { connection_id_input: connectionId, action_input: action });
+  if (error) throw error;
+  return data as ArtistConnection;
 }
 
 export async function setArtistSaved(userId: string, artistUserId: string, saved: boolean) {
