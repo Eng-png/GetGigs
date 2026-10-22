@@ -219,7 +219,11 @@ function emptyBookingInfo(): Opportunity["bookingInfo"] {
 }
 
 export async function loadPublicArtists(): Promise<PublicArtist[]> {
-  const { data, error } = await requireSupabase().from("artist_directory").select("*").eq("is_published", true).order("updated_at", { ascending: false });
+  const { data, error } = await requireSupabase()
+    .from("artist_directory")
+    .select("user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, website, spotify_url, youtube_url, instagram_url, updated_at")
+    .eq("is_published", true)
+    .order("updated_at", { ascending: false });
   if (error) throw error;
   return (data || []) as PublicArtist[];
 }

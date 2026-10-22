@@ -30,12 +30,12 @@ const NAV_ITEMS = [
 
 export default function App() {
   const { configured, loading: authLoading, session, profile: account, signOut, updatePassword, refreshProfile } = useAuth();
-  const [visitorMode, setVisitorMode] = useState<VisitorMode | null>(null);
+  const [visitorMode, setVisitorMode] = useState<VisitorMode | null>(() => visitorModeFromStorage());
   const [section, setSection] = useState<Section>("explore");
   const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true, adminLogin: requestedRoleFromPath() === "admin" } : null);
   const [demoStep, setDemoStep] = useState(() => Number(window.localStorage.getItem("getgigs-demo-step-v1") || 0));
   const [applying, setApplying] = useState<Opportunity | null>(null);
-  const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(new Set());
+  const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(() => demoSavedVenueIdsFromStorage());
   const [venues, setVenues] = useState<Opportunity[]>(OPPORTUNITIES);
   const [bookingProfile, setBookingProfile] = useState<BookingProfile>(EMPTY_PROFILE);
   const [demoProfile, setDemoProfile] = useState(MAYA_PROFILE);
@@ -46,7 +46,6 @@ export default function App() {
 
   useEffect(() => {
     if (!requestedRole) window.history.replaceState({}, "", appPath("/"));
-    window.localStorage.removeItem("getgigs-visitor-mode-v1");
   }, [requestedRole]);
 
   const accessMode: ScreenAccessMode | null = session ? "authenticated" : visitorMode;
@@ -116,7 +115,7 @@ export default function App() {
     const nextSaved = !savedOpportunityIds.has(id);
     setSavedOpportunityIds((current) => { const next = new Set(current); nextSaved ? next.add(id) : next.delete(id); return next; });
     if (session) void setVenueSaved(session.user.id, id, nextSaved).catch((error) => setDataNotice(error instanceof Error ? error.message : "Could not update saved venues."));
-    else window.localStorage.setItem("getgigs-demo-saved-v1", JSON.stringify([...savedOpportunityIds]));
+    else window.localStorage.setItem("getgigs-demo-saved-v1", JSON.stringify([...savedOpportunityIds, ...(nextSaved ? [id] : [])].filter((value) => nextSaved || value !== id)));
   };
   const requireAuth = () => setAuth({ mode: "login", locked: true });
   const startApplication = (opportunity: Opportunity) => visitorMode === "guest" ? requireAuth() : setApplying(opportunity);
@@ -152,6 +151,14 @@ function AccountMenu({accountName,role,open,onToggle,onProfile,onSettings,onLogO
 function AccessDenied({currentRole,requestedRole,onBack}:{currentRole:string;requestedRole:string;onBack:()=>void}) { return <main className="gg-access-denied"><span>403</span><h1>Access denied</h1><p>Your {currentRole} account does not have permission to open the {requestedRole} workspace.</p><button onClick={onBack}>Return to GetGigs</button></main>; }
 function ResetPasswordScreen({onSave,onDone}:{onSave:(password:string)=>Promise<void>;onDone:()=>void}) { const [password,setPassword]=useState("");const [confirm,setConfirm]=useState("");const [message,setMessage]=useState("");const submit=async(e:React.FormEvent)=>{e.preventDefault();if(password.length<8)return setMessage("Use at least 8 characters.");if(password!==confirm)return setMessage("The passwords do not match.");try{await onSave(password);setMessage("Password updated. You can return to GetGigs.");}catch(error){setMessage(error instanceof Error?error.message:"Could not update your password.")}};return <main className="gg-reset-page"><form onSubmit={submit}><span className="gg-kicker">Secure account recovery</span><h1>Choose a new password</h1><label>New password<input type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><label>Confirm password<input type="password" autoComplete="new-password" value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>{message&&<p>{message}</p>}<button className="primary">Update password</button><button type="button" onClick={onDone}>Return to GetGigs</button></form></main>; }
 function visitorModeFromStorage(): VisitorMode | null { const value=window.localStorage.getItem("getgigs-visitor-mode-v1"); return value==="guest"||value==="demo"?value:null; }
+function demoSavedVenueIdsFromStorage(): Set<string> {
+  try {
+    const value = JSON.parse(window.localStorage.getItem("getgigs-demo-saved-v1") || "[]");
+    return new Set(Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
 function appPath(path: string) {
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   return `${base}${path === "/" ? "/" : path}`;
