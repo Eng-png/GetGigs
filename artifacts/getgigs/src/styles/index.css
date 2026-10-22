@@ -13,7 +13,8 @@ body { overflow: hidden; background: #000; }
 }
 .yondr-product-view {
   position: relative;
-  width: min(100%, 520px);
+  width: 100%;
+  max-width: 1440px;
   height: 100dvh;
   overflow: hidden;
   background: #fdfaf6;
@@ -91,7 +92,7 @@ body { overflow: hidden; background: #000; }
 
 @media (min-width: 700px) {
   .yondr-product-shell { padding: 18px; }
-  .yondr-product-view { height: calc(100dvh - 36px); border-radius: 24px; }
+  .yondr-product-view { height: 100dvh; border-radius: 0; }
   .yondr-product-nav { border-radius: 20px 20px 24px 24px; }
 }
 
@@ -112,6 +113,8 @@ body { overflow: hidden; background: #000; }
 .gg-session-chip{position:absolute;z-index:1150;top:max(58px,calc(env(safe-area-inset-top) + 46px));right:13px;min-height:34px;padding:0 10px;border:1px solid rgba(0,0,0,.15);border-radius:999px;display:flex;align-items:center;gap:6px;background:rgba(253,250,246,.88);backdrop-filter:blur(10px);font:600 9px/1 Inter,sans-serif;cursor:pointer}.gg-demo-coach{position:absolute;z-index:1400;left:14px;right:14px;bottom:88px;padding:16px 46px 15px 16px;border:1px solid rgba(255,255,255,.25);border-radius:18px;background:rgba(17,16,14,.95);color:#fff;box-shadow:0 18px 60px rgba(0,0,0,.3);font-family:Inter,sans-serif}.gg-demo-coach>button{position:absolute;right:11px;top:11px;width:30px;height:30px;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.1);color:#fff}.gg-demo-coach>span{display:block;color:#e6e83c;font-size:8px;letter-spacing:1.2px;text-transform:uppercase}.gg-demo-coach>strong{display:block;margin-top:6px;font:500 17px/1.1 'Besley',serif}.gg-demo-coach p{margin:6px 0 12px;color:rgba(255,255,255,.7);font-size:9px;line-height:1.45}.gg-demo-coach>div{display:flex;gap:6px}.gg-demo-coach>div button{min-height:30px;padding:0 11px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:transparent;color:#fff;font-size:8px}.gg-demo-coach>div button:last-child{background:#e6e83c;color:#000}.gg-demo-inline{margin-bottom:24px;padding:12px 14px;border-radius:13px;display:grid;gap:3px;background:#e6e83c;font-size:9px;line-height:1.4}
 .gg-detail-actions{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:30px}.gg-detail-actions button{min-height:42px;padding:0 13px;border:1px solid rgba(0,0,0,.24);border-radius:999px;display:flex;align-items:center;justify-content:center;gap:6px;background:transparent;font:600 9px/1 Inter,sans-serif}.gg-detail-actions .primary{background:#e6e83c;border-color:#11100e}.gg-detail-section{margin-top:48px}.gg-gallery-grid{display:grid;grid-template-columns:2fr 1fr;grid-auto-rows:120px;gap:7px;margin-top:14px}.gg-gallery-grid img,.gg-gallery-grid>div{width:100%;height:100%;object-fit:cover;border-radius:12px}.gg-gallery-grid>:first-child{grid-row:span 2}.gg-fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}.gg-fact-grid>div{min-height:80px;padding:13px;border-radius:13px;background:#f0ebe3}.gg-fact-grid span{display:block;color:rgba(0,0,0,.45);font-size:8px;text-transform:uppercase}.gg-fact-grid strong{display:block;margin-top:8px;font:500 14px/1.3 'Besley',serif}.gg-booking-panel{margin-top:48px;padding:22px;border:1px solid rgba(0,0,0,.16);border-radius:20px;background:#f3ede2}.gg-private-label,.gg-safety-note{margin:10px 0;padding:9px 11px;border-radius:9px;background:rgba(189,142,60,.14);color:#72520f;font-size:8px}.gg-link-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}.gg-link-row a{min-height:34px;padding:0 11px;border:1px solid rgba(0,0,0,.18);border-radius:999px;display:flex;align-items:center;gap:5px;color:#11100e;font-size:8px;text-decoration:none}.gg-locked-content{padding:30px 10px;text-align:center}.gg-locked-content h2{margin:12px 0 7px;font:500 24px/1.05 'Besley',serif}.gg-locked-content p{max-width:350px;margin:0 auto;color:rgba(0,0,0,.55);font-size:10px;line-height:1.5}.gg-locked-content button{min-height:40px;margin-top:16px;padding:0 14px;border:1px solid #11100e;border-radius:999px;background:#e6e83c;font-size:9px}
 .gg-admin-page,.gg-venue-form{height:100%;box-sizing:border-box;overflow-y:auto;padding:24px 20px 60px;background:#fdfaf6;color:#11100e;font-family:Inter,sans-serif}.gg-admin-page>header,.gg-form-top{display:grid;gap:18px}.gg-admin-page h1,.gg-venue-form h1{margin:5px 0 6px;font:500 36px/1 'Besley',serif}.gg-admin-page header p{margin:0;color:rgba(0,0,0,.55);font:13px/1.5 'Besley',serif}.gg-admin-notice{margin:24px 0;padding:14px;border-radius:13px;display:grid;gap:4px;background:#e6e83c;font-size:9px}.gg-admin-list{display:grid;gap:10px}.gg-admin-list article{padding:11px;border:1px solid rgba(0,0,0,.12);border-radius:17px;display:grid;grid-template-columns:84px 1fr;gap:13px}.gg-admin-list article>img,.gg-admin-list article>div[role=img]{width:84px;height:100px;object-fit:cover;border-radius:11px}.gg-admin-list article h2{margin:5px 0;font:500 18px/1.1 'Besley',serif}.gg-admin-list article p,.gg-admin-list article span,.gg-admin-list article small{font-size:8px}.gg-admin-actions{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}.gg-admin-actions button{min-height:34px;font-size:8px}.gg-admin-actions .danger{color:#9e241c}.gg-form-top{padding-bottom:24px;border-bottom:1px solid rgba(0,0,0,.15)}.gg-form-section{margin-top:24px;padding:18px;border:1px solid rgba(0,0,0,.15);border-radius:18px}.gg-form-section>header{margin-bottom:17px}.gg-form-section h2{margin:0;font:500 24px/1 'Besley',serif}.gg-form-section header p{margin:7px 0 0;color:#8a5e13;font-size:9px}.gg-form-grid,.gg-profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}.gg-field,.gg-profile-fields>label{display:grid;gap:5px}.gg-field>span{font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.gg-field input,.gg-field textarea,.gg-field select{width:100%;min-height:40px;box-sizing:border-box;padding:9px 10px;border:1px solid rgba(0,0,0,.18);border-radius:10px;background:#f4efe7;font:10px Inter,sans-serif}.gg-field textarea{min-height:85px;resize:vertical}.gg-form-wide{grid-column:1/-1}.gg-check{min-height:40px;display:flex!important;align-items:center;gap:8px;font-size:9px}.gg-check input{width:16px!important;min-height:16px!important}.gg-form-submit{display:flex;gap:8px;margin-top:24px}.gg-form-submit .primary{flex:1}.gg-gallery-editor>p,.gg-upload-card p{color:rgba(0,0,0,.5);font-size:8px;line-height:1.45}.gg-gallery-editor>div{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.gg-gallery-editor>div button{position:relative;height:90px;padding:0;border:0;border-radius:10px;overflow:hidden}.gg-gallery-editor img{width:100%;height:100%;object-fit:cover}.gg-gallery-editor>div span{position:absolute;left:4px;bottom:4px;padding:4px;border-radius:5px;background:rgba(0,0,0,.7);color:#fff;font-size:7px}.gg-add-gallery{margin-top:10px}.gg-field-error{color:#a5261e!important;font-size:9px!important}.gg-upload-card{display:grid;gap:10px;padding:14px;border:1px solid rgba(0,0,0,.14);border-radius:16px}.gg-upload-card>div:first-child strong{font:500 16px 'Besley',serif}.gg-upload-drop{min-height:150px;border:1px dashed rgba(0,0,0,.3);border-radius:14px;display:grid;place-items:center;align-content:center;gap:7px;background:#f2ede5}.gg-upload-actions{display:flex;gap:7px}.gg-upload-actions button{min-height:34px;padding:0 10px;border:1px solid rgba(0,0,0,.18);border-radius:999px;display:flex;align-items:center;gap:5px;background:#fdfaf6;font-size:8px}.gg-profile-editor{margin:22px 20px 0;padding:20px;border:1px solid #11100e;border-radius:22px;background:#fdfaf6}.gg-profile-upload-grid{display:grid;gap:10px;margin-top:20px}.gg-upload-guidance{color:rgba(0,0,0,.5);font-size:8px}.gg-file-assets{display:grid;gap:7px}.gg-file-assets label{padding:11px;border:1px solid rgba(0,0,0,.14);border-radius:11px;display:grid;gap:5px}.gg-file-assets label span{font-size:9px;font-weight:600}.gg-file-assets label small{color:rgba(0,0,0,.48);font-size:8px}
+.gg-quick-profile-editor{max-width:900px;margin-inline:auto}.gg-quick-profile-editor .gg-profile-fields input,.gg-quick-profile-editor .gg-profile-fields select,.gg-quick-profile-editor .gg-profile-fields textarea{width:100%;box-sizing:border-box;min-height:42px;padding:10px 11px;border:1px solid rgba(0,0,0,.18);border-radius:11px;background:#f4efe7;font:10px Inter,sans-serif}.gg-quick-profile-editor .gg-profile-fields textarea{resize:vertical}
+.gg-image-cropper{display:grid;gap:9px;margin-top:12px;padding:13px;border:1px solid rgba(0,0,0,.16);border-radius:14px;background:#f4efe7}.gg-image-cropper p{margin:0;color:rgba(0,0,0,.52);font-size:8px}.gg-image-cropper label{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:8px;font-size:8px}.gg-image-crop-frame{width:100%;overflow:hidden;border-radius:12px;background:#ddd;display:grid;place-items:center}.gg-image-crop-frame img{display:block;max-width:none;object-fit:cover}
 @media(max-width:420px){.gg-welcome-actions{grid-template-columns:1fr}.gg-welcome-actions .demo{grid-column:auto}.gg-detail-actions{grid-template-columns:1fr auto}.gg-detail-actions .primary{grid-column:1/-1}.gg-form-grid,.gg-profile-fields{grid-template-columns:1fr}.gg-form-wide{grid-column:auto}.gg-fact-grid{grid-template-columns:1fr}.gg-demo-coach{right:10px;left:10px}.gg-gallery-grid{grid-auto-rows:95px}}
 @media(min-width:700px){.gg-welcome{width:min(100%,980px);min-height:calc(100dvh - 36px);margin:auto;grid-template-columns:45% 55%;grid-template-rows:1fr;border-radius:24px;overflow:hidden}.gg-welcome-copy{align-self:center;padding:50px}.gg-profile-upload-grid{grid-template-columns:1fr 1fr}}
 
@@ -122,3 +125,528 @@ body { overflow: hidden; background: #000; }
 .gg-admin-shell .gg-role-header{background:#11100e;color:#fff}.gg-admin-shell .gg-role-header p{color:rgba(255,255,255,.6)}.gg-admin-tabs{padding:14px 20px;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid rgba(0,0,0,.1);scrollbar-width:none}.gg-admin-tabs button,.gg-filter-row button{flex:none;min-height:34px;padding:0 11px;border:1px solid rgba(0,0,0,.16);border-radius:999px;display:flex;align-items:center;gap:5px;background:#fdfaf6;font-size:8px;text-transform:capitalize}.gg-admin-tabs button.active,.gg-filter-row button.active{background:#e6e83c;border-color:#11100e}.gg-metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.gg-metrics article{padding:18px;border:1px solid rgba(0,0,0,.12);border-radius:16px;background:#fff}.gg-metrics strong{display:block;font:500 30px/1 'Besley',serif}.gg-metrics span{display:block;margin-top:6px;color:rgba(0,0,0,.48);font-size:8px;text-transform:uppercase}.gg-admin-table{margin-top:30px}.gg-admin-table>div{padding:13px 0;border-top:1px solid rgba(0,0,0,.14);display:grid;grid-template-columns:minmax(0,1.5fr) .7fr .8fr auto;align-items:center;gap:9px;font-size:8px}.gg-admin-table span,.gg-admin-table strong,.gg-admin-table small{display:block;overflow-wrap:anywhere}.gg-admin-table small{margin-top:4px;color:rgba(0,0,0,.45)}.gg-admin-table button{min-height:30px;padding:0 9px;border:1px solid rgba(0,0,0,.16);border-radius:999px;background:#fff;font-size:7px}.gg-filter-row{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto}.gg-admin-records{display:grid;gap:10px}.gg-admin-records article{padding:16px;border:1px solid rgba(0,0,0,.13);border-radius:16px;background:#fff}.gg-admin-records article>div strong{display:block;font:500 19px 'Besley',serif}.gg-admin-records article>div small{display:block;margin-top:4px;color:rgba(0,0,0,.48);font-size:8px}.gg-admin-records dl{margin:14px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}.gg-admin-records dl div{min-width:0}.gg-admin-records dt{color:#9b7027;font-size:7px;text-transform:capitalize}.gg-admin-records dd{margin:4px 0 0;font-size:9px;overflow-wrap:anywhere}
 @media(min-width:700px){.gg-role-content{padding:45px 48px}.gg-role-header{padding-right:48px;padding-left:48px}.gg-role-nav{left:50%;right:auto;bottom:18px;width:min(700px,calc(100% - 72px));transform:translateX(-50%);border:1px solid rgba(0,0,0,.1);border-radius:20px}.gg-artist-directory{grid-template-columns:repeat(2,1fr)}.gg-artist-image{height:260px}.gg-metrics{grid-template-columns:repeat(4,1fr)}.gg-admin-records{grid-template-columns:repeat(2,1fr)}.gg-admin-tabs{padding-right:48px;padding-left:48px}}
 @media(max-width:520px){.gg-role-choice{grid-template-columns:1fr}.gg-account-form{grid-template-columns:1fr}.gg-account-form label.wide,.gg-account-form button.primary{grid-column:auto}.gg-admin-table>div{grid-template-columns:1fr auto}.gg-admin-table>div>:nth-child(3){display:none}.gg-admin-records dl{grid-template-columns:1fr}.gg-role-nav button span{font-size:6.5px}.gg-welcome-auth-actions .primary{justify-content:center;text-align:center}}
+
+/* Responsive layout system: keep the visual language, adapt the available space. */
+*, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: hidden; }
+img, svg, video, canvas { max-width: 100%; }
+button, input, textarea, select { max-width: 100%; }
+
+.yondr-product-shell {
+  min-height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+}
+.yondr-product-view {
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  height: 100dvh;
+  box-sizing: border-box;
+  box-shadow: none;
+}
+.yondr-editable-canvas,
+.yondr-editable-canvas > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.yondr-product-nav button,
+.gg-welcome-actions button,
+.gg-auth-modal button,
+.gg-detail-actions button,
+.gg-admin-page button,
+.gg-venue-form button {
+  touch-action: manipulation;
+}
+.gg-modal-layer {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.gg-auth-modal,
+.gg-reset-page form,
+.gg-admin-page,
+.gg-venue-form,
+.gg-role-shell,
+.gg-role-content,
+.gg-form-section,
+.gg-form-grid,
+.gg-profile-fields {
+  min-width: 0;
+}
+.gg-admin-page,
+.gg-venue-form {
+  padding-inline: clamp(16px, 3vw, 48px);
+}
+.gg-admin-login-button {
+  border-color: #11100e !important;
+  background: #11100e !important;
+  color: #fff !important;
+}
+.gg-match-card-scroller {
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.gg-match-card-scroller::-webkit-scrollbar {
+  display: none;
+}
+.gg-match-card-scroller > * {
+  flex: 0 0 clamp(220px, 31vw, 340px);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.gg-match-card {
+  aspect-ratio: 1 / 1;
+  height: auto !important;
+}
+.gg-match-name {
+  transition: color 160ms ease;
+}
+.gg-match-name:hover,
+.gg-match-name:focus-visible,
+.gg-match-name:active {
+  color: #ddd864 !important;
+}
+.gg-square-media {
+  aspect-ratio: 1 / 1;
+  height: auto !important;
+}
+.gg-detail-row-location strong,
+.gg-detail-row-genres strong {
+  font-size: clamp(12px, .72rem + .25vw, 16px);
+  line-height: 1.35;
+}
+.gg-artist-image {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.gg-gallery-grid img,
+.gg-gallery-grid > div {
+  aspect-ratio: 1 / 1;
+}
+.gg-admin-page > header,
+.gg-form-top {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+}
+.gg-admin-page > header > div,
+.gg-form-top > div {
+  min-width: 0;
+}
+.gg-admin-page h1,
+.gg-venue-form h1 {
+  font-size: clamp(32px, 3.2vw, 48px);
+  overflow-wrap: anywhere;
+}
+.gg-admin-list,
+.gg-form-section,
+.gg-role-content {
+  width: min(100%, 1240px);
+  margin-inline: auto;
+}
+.gg-admin-list article {
+  min-width: 0;
+}
+.gg-admin-list article > div:nth-child(2) {
+  min-width: 0;
+}
+.gg-admin-list article h2,
+.gg-admin-list article p {
+  overflow-wrap: anywhere;
+}
+.gg-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.gg-field {
+  min-width: 0;
+}
+.gg-field input,
+.gg-field textarea,
+.gg-field select {
+  min-width: 0;
+  font-size: clamp(10px, .72rem + .1vw, 13px);
+}
+.gg-gallery-editor > div {
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+}
+.gg-gallery-editor > div button {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+}
+.gg-role-header {
+  padding-inline: clamp(22px, 5vw, 72px);
+}
+.gg-role-header h1 {
+  font-size: clamp(42px, 5vw, 68px);
+}
+.gg-role-content {
+  padding-inline: clamp(20px, 5vw, 72px);
+}
+.gg-admin-tabs,
+.gg-filter-row {
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+.gg-admin-tabs::-webkit-scrollbar,
+.gg-filter-row::-webkit-scrollbar {
+  display: none;
+}
+.gg-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.gg-admin-table > div {
+  min-width: 0;
+}
+.gg-admin-table > div > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gg-account-menu > div {
+  max-width: calc(100vw - 26px);
+}
+.gg-venue-detail {
+  --gg-detail-font-family: 'Google Sans Flex', 'Google Sans', Inter, sans-serif;
+  --gg-detail-font-size: 11px;
+  --gg-detail-color: #11100e;
+}
+.gg-venue-detail .gg-detail-row,
+.gg-venue-detail .gg-detail-row > *,
+.gg-venue-detail .gg-fact-grid,
+.gg-venue-detail .gg-fact-grid > *,
+.gg-venue-detail .gg-private-label,
+.gg-venue-detail .gg-safety-note,
+.gg-venue-detail .gg-link-row,
+.gg-venue-detail .gg-link-row a,
+.gg-venue-detail > main > p,
+.gg-venue-detail > main > small,
+.gg-venue-detail > div:first-child p,
+.gg-venue-detail .gg-locked-content p,
+.gg-venue-detail .gg-demo-inline span {
+  font-family: var(--gg-detail-font-family) !important;
+  font-size: var(--gg-detail-font-size) !important;
+  color: var(--gg-detail-color) !important;
+}
+.gg-venue-detail .gg-detail-row {
+  line-height: 1.45;
+}
+.gg-venue-detail .gg-fact-grid strong {
+  font: 500 var(--gg-detail-font-size)/1.45 var(--gg-detail-font-family) !important;
+  color: var(--gg-detail-color) !important;
+}
+.gg-venue-detail .gg-detail-row-location strong,
+.gg-venue-detail .gg-detail-row-genres strong {
+  font-size: var(--gg-detail-font-size) !important;
+}
+.gg-typography-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(120px, .7fr) minmax(90px, .4fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+.gg-typography-editor label {
+  display: grid;
+  gap: 6px;
+}
+.gg-typography-editor label > span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.gg-typography-editor input,
+.gg-typography-editor select {
+  min-height: 42px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 10px;
+  background: #f4efe7;
+}
+.gg-typography-editor input[type="color"] {
+  padding: 4px;
+}
+.gg-admin-editor-panel {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px) clamp(16px, 4vw, 48px) 90px;
+  overflow-y: auto;
+}
+.gg-admin-json-editor,
+.gg-content-editor textarea {
+  width: 100%;
+  min-height: 420px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 14px;
+  background: #f4efe7;
+  color: #11100e;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+}
+.gg-admin-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.gg-content-editor {
+  display: grid;
+  gap: 18px;
+}
+.gg-content-editor label {
+  display: grid;
+  gap: 8px;
+}
+.gg-content-editor label > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.gg-content-editor textarea {
+  min-height: 110px;
+  font-family: Inter, sans-serif;
+}
+.gg-content-editor button {
+  justify-self: start;
+}
+.gg-user-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gg-user-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.gg-user-actions .danger {
+  color: #9e241c;
+}
+
+@media (min-width: 600px) {
+  .yondr-product-shell {
+    padding: clamp(0px, 1.7vw, 24px);
+  }
+  .yondr-product-view {
+    height: calc(100dvh - clamp(0px, 3.4vw, 48px));
+    border-radius: clamp(0px, 1.6vw, 24px);
+    overflow: hidden;
+    box-shadow: 0 0 70px rgba(0,0,0,.22);
+  }
+  .gg-welcome {
+    grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr);
+    grid-template-rows: 1fr;
+    min-height: 100%;
+    overflow: hidden;
+  }
+  .gg-welcome-art {
+    min-height: 100%;
+  }
+  .gg-welcome-copy {
+    width: min(100%, 680px);
+    padding: clamp(32px, 5vw, 72px);
+    align-self: center;
+  }
+  .gg-welcome h1 {
+    font-size: clamp(48px, 5.5vw, 78px);
+  }
+  .gg-welcome-actions {
+    gap: 10px;
+  }
+  .gg-welcome-actions button,
+  .gg-auth-modal button,
+  .gg-detail-actions button,
+  .gg-admin-page button,
+  .gg-venue-form button {
+    min-height: 48px;
+    font-size: clamp(10px, .72rem + .1vw, 13px);
+  }
+  .gg-role-header {
+    min-height: clamp(250px, 30vh, 360px);
+    padding-top: clamp(56px, 8vh, 96px);
+  }
+  .gg-role-content {
+    padding-top: clamp(32px, 5vw, 64px);
+    padding-bottom: 64px;
+  }
+  .gg-admin-records {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gg-profile-upload-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .yondr-product-view {
+    max-width: 1400px;
+  }
+  .gg-welcome {
+    grid-template-columns: minmax(360px, .72fr) minmax(0, 1.28fr);
+  }
+  .gg-admin-page,
+  .gg-venue-form {
+    padding-top: clamp(28px, 3vw, 48px);
+    padding-bottom: 80px;
+  }
+  .gg-admin-page > header,
+  .gg-form-top {
+    gap: 28px;
+  }
+  .gg-role-header {
+    padding-inline: clamp(36px, 7vw, 96px);
+  }
+  .gg-role-content {
+    padding-inline: clamp(36px, 7vw, 96px);
+  }
+  .gg-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .gg-admin-records {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .gg-admin-list article {
+    grid-template-columns: 112px minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 16px;
+  }
+  .gg-admin-list article > img,
+  .gg-admin-list article > div[role=img] {
+    width: 112px;
+    height: 112px;
+  }
+  .gg-admin-actions {
+    grid-column: auto;
+    justify-content: flex-end;
+  }
+  .gg-form-section {
+    padding: clamp(20px, 2.4vw, 34px);
+  }
+  .gg-form-section h2 {
+    font-size: clamp(24px, 2vw, 32px);
+  }
+  .gg-fact-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .gg-gallery-grid {
+    grid-auto-rows: clamp(140px, 14vw, 220px);
+  }
+}
+
+@media (max-width: 599px) {
+  body {
+    overflow-x: hidden;
+  }
+  .yondr-product-view {
+    border-radius: 0;
+  }
+  .yondr-product-nav {
+    padding-inline: max(10px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-right));
+  }
+  .yondr-product-nav button {
+    min-height: 54px;
+    font-size: clamp(10px, 2.4vw, 12px);
+  }
+  .gg-welcome-actions,
+  .gg-form-grid,
+  .gg-profile-fields,
+  .gg-metrics {
+    grid-template-columns: 1fr;
+  }
+  .gg-form-wide {
+    grid-column: auto;
+  }
+  .gg-admin-page > header,
+  .gg-form-top {
+    grid-template-columns: 1fr;
+  }
+  .gg-admin-page > header > button:last-child,
+  .gg-form-top > button:last-child {
+    width: 100%;
+  }
+  .gg-admin-list article {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .gg-admin-list article > img,
+  .gg-admin-list article > div[role=img] {
+    width: 72px;
+    height: 88px;
+  }
+  .gg-admin-actions {
+    grid-column: 1 / -1;
+  }
+  .gg-admin-actions button {
+    flex: 1 1 110px;
+  }
+  .gg-detail-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gg-match-card-scroller {
+    gap: 12px !important;
+    padding-inline: 16px !important;
+  }
+  .gg-match-card-scroller > * {
+    flex-basis: min(82vw, 320px);
+  }
+  .gg-card-location {
+    font-size: 12px !important;
+  }
+  .gg-detail-actions .primary {
+    grid-column: 1 / -1;
+  }
+  .gg-gallery-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: clamp(90px, 25vw, 150px);
+  }
+  .gg-fact-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gg-booking-panel {
+    padding: 16px;
+  }
+  .gg-link-row a {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+  .gg-role-header {
+    min-height: 220px;
+    padding: 70px 20px 28px;
+  }
+  .gg-role-content {
+    padding: 28px 16px 56px;
+  }
+  .gg-admin-table > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .gg-admin-table > div > :nth-child(3) {
+    display: none;
+  }
+  .gg-user-actions {
+    grid-column: 1 / -1;
+  }
+  .gg-auth-modal {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 24px 18px;
+    border-radius: 20px;
+  }
+  .gg-admin-media-grid {
+    grid-template-columns: 1fr;
+  }
+  .gg-typography-editor {
+    grid-template-columns: 1fr;
+  }
+  .gg-modal-layer {
+    padding: 12px;
+    place-items: start center;
+  }
+  .gg-reset-page {
+    padding: 16px;
+  }
+  .gg-reset-page form {
+    padding: 22px 18px;
+  }
+}

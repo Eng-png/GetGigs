@@ -47,6 +47,9 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
 
+      - name: Enable client-side routes
+        run: cp artifacts/getgigs/dist/public/index.html artifacts/getgigs/dist/public/404.html
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:

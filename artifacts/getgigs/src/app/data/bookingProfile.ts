@@ -63,6 +63,8 @@ export type BookingProfile = {
   rider: { members: string[]; inputs: Array<{ channel: number; instrument: string; input: string }>; backline: string; monitors: string; microphones: string; lighting: string; power: string; hospitality: string };
   availability: Array<{ month: string; date: number; status: "Available" | "Tentative" | "Unavailable" }>;
   preferences: { capacity: string; gigTypes: string[]; compatibleArtists: string; travelRadius: string; cities: string; minimumFee: string; touring: boolean };
+  networkInterests: string;
+  shareAvailability: boolean;
 };
 
 export const MAYA_PROFILE: BookingProfile = {
@@ -145,6 +147,8 @@ export const MAYA_PROFILE: BookingProfile = {
   },
   availability: [{ month: "October", date: 12, status: "Available" }, { month: "October", date: 18, status: "Tentative" }, { month: "October", date: 25, status: "Available" }, { month: "November", date: 3, status: "Available" }, { month: "November", date: 8, status: "Unavailable" }, { month: "November", date: 21, status: "Available" }],
   preferences: { capacity: "100–500", gigTypes: ["Headline", "Supporting", "Festival", "College", "Showcase"], compatibleArtists: "Indie pop, alternative, electronic, singer-songwriter", travelRadius: "Boston + 100 miles", cities: "Boston, Providence, New York, Portland", minimumFee: "$300", touring: true },
+  networkInterests: "Co-writing, live collaborations, opening slots",
+  shareAvailability: true,
 };
 
 /** Blank starting point for a real prototype account. Demo mode deliberately uses MAYA_PROFILE. */
@@ -206,4 +210,6 @@ export const EMPTY_PROFILE: BookingProfile = {
   notablePerformances: [],
   availability: [],
   preferences: { capacity: "", gigTypes: [], compatibleArtists: "", travelRadius: "", cities: "", minimumFee: "", touring: false },
+  networkInterests: "",
+  shareAvailability: false,
 };

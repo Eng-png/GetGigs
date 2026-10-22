@@ -18,6 +18,20 @@ export type PublicArtist = {
   spotify_url: string;
   youtube_url: string;
   instagram_url: string;
+  performer_count: number;
+  collaboration_interests: string[];
+  availability_public: boolean;
+  next_available_dates: string[];
+  updated_at: string;
+};
+
+export type ConnectionStatus = "pending" | "accepted" | "declined" | "cancelled";
+export type ArtistConnection = {
+  id: string;
+  requester_id: string;
+  recipient_id: string;
+  status: ConnectionStatus;
+  created_at: string;
   updated_at: string;
 };
 
@@ -35,6 +49,16 @@ export type PostedOpportunity = {
   created_at: string;
 };
 
+export type SiteContent = { content_key: string; content_value: string; updated_at: string };
+export type AdminActivity = {
+  id: string;
+  actor_id: string | null;
+  subject_user_id: string | null;
+  activity_type: string;
+  details: Record<string, unknown>;
+  created_at: string;
+};
+
 export async function loadArtistProfile(userId: string): Promise<BookingProfile> {
   const client = requireSupabase();
   const { data, error } = await client.from("artist_profiles").select("profile_data").eq("user_id", userId).maybeSingle();
@@ -46,55 +70,25 @@ export async function saveArtistProfile(userId: string, profile: BookingProfile)
   const client = requireSupabase();
   const stored = await uploadEmbeddedProfileMedia(userId, profile);
   const completion = profileCompletion(stored);
-  const { error: privateError } = await client.from("artist_profiles").upsert({
-    user_id: userId,
-    profile_data: stored,
-    profile_completion: completion,
-    updated_at: new Date().toISOString(),
-  });
-  if (privateError) throw privateError;
-
   const genres = [stored.genre, ...stored.secondaryGenres.split(",")].map((item) => item.trim()).filter(Boolean);
-  const { error: publicError } = await client.from("artist_directory").upsert({
-    user_id: userId,
-    artist_name: stored.name,
-    artist_type: stored.artistType,
-    city: stored.city,
-    region: stored.region,
-    genres,
-    bio: stored.oneLineBio || stored.shortBio,
-    profile_photo_url: stored.image,
-    cover_photo_url: stored.bandImage,
-    website: stored.website,
-    spotify_url: stored.spotify,
-    youtube_url: stored.youtube,
-    instagram_url: stored.instagram,
-    is_published: Boolean(stored.name),
-    updated_at: new Date().toISOString(),
+  const { data, error } = await client.rpc("save_artist_profile", {
+    profile_input: stored,
+    completion_input: completion,
+    genres_input: genres,
   });
-  if (publicError) throw publicError;
+  if (error) throw new Error(`Profile save failed (${error.code || "supabase"}): ${error.message}`);
+  try {
+    await logActivity(userId, "profile_updated", { profileCompletion: completion });
+  } catch (error) {
+    console.warn("Profile saved, but activity logging failed.", error);
+  }
+  return (data || stored) as BookingProfile;
+}
 
-  const { error: profileError } = await client.from("profiles").update({
-    display_name: stored.name,
-    profile_photo_url: stored.image,
-    city: stored.city,
-    state: stored.region,
-    country: stored.country,
-    updated_at: new Date().toISOString(),
-  }).eq("id", userId);
-  if (profileError) throw profileError;
-
-  const { error: preferencesError } = await client.from("user_preferences").upsert({
-    user_id: userId,
-    preferred_genres: genres,
-    preferred_city: stored.preferences.cities || stored.preferredCities || stored.city,
-    preferred_radius: stored.preferences.travelRadius,
-    preferred_capacity: stored.preferences.capacity || stored.preferredVenueCapacity,
-    preferred_gig_types: stored.preferences.gigTypes,
-    updated_at: new Date().toISOString(),
-  });
-  if (preferencesError) throw preferencesError;
-  return stored;
+export async function loadAdminArtistProfile(userId: string): Promise<BookingProfile> {
+  const { data, error } = await requireSupabase().from("artist_profiles").select("profile_data").eq("user_id", userId).single();
+  if (error) throw error;
+  return { ...EMPTY_PROFILE, ...((data?.profile_data || {}) as Partial<BookingProfile>) };
 }
 
 export async function loadSavedVenueIds(userId: string): Promise<string[]> {
@@ -109,11 +103,83 @@ export async function setVenueSaved(userId: string, venueId: string, saved: bool
     ? await client.from("saved_venues").upsert({ user_id: userId, venue_id: venueId })
     : await client.from("saved_venues").delete().eq("user_id", userId).eq("venue_id", venueId);
   if (result.error) throw result.error;
+  await logActivity(userId, saved ? "venue_saved" : "venue_unsaved", { venueId });
 }
 
 export async function recordSearch(userId: string, searchQuery: string, filters: Record<string, unknown>) {
   const { error } = await requireSupabase().from("search_history").insert({ user_id: userId, search_query: searchQuery, filters });
   if (error) throw error;
+  await logActivity(userId, "search", { query: searchQuery, filters });
+}
+
+export async function logActivity(actorId: string, activityType: string, details: Record<string, unknown> = {}, subjectUserId?: string) {
+  const { error } = await requireSupabase().from("admin_activity").insert({
+    actor_id: actorId,
+    subject_user_id: subjectUserId || actorId,
+    activity_type: activityType,
+    details,
+  });
+  if (error) throw error;
+}
+
+export async function loadSiteContent(): Promise<Record<string, string>> {
+  const { data, error } = await requireSupabase().from("site_content").select("content_key, content_value");
+  if (error) throw error;
+  return Object.fromEntries((data || []).map((row) => [String(row.content_key), String(row.content_value)]));
+}
+
+export async function saveSiteContent(contentKey: string, contentValue: string, userId: string) {
+  const { error } = await requireSupabase().from("site_content").upsert({
+    content_key: contentKey,
+    content_value: contentValue,
+    updated_by: userId,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+  await logActivity(userId, "content_updated", { contentKey });
+}
+
+export async function loadAdminActivity(limit = 100): Promise<AdminActivity[]> {
+  const { data, error } = await requireSupabase().from("admin_activity").select("*").order("created_at", { ascending: false }).limit(limit);
+  if (error) throw error;
+  return (data || []) as AdminActivity[];
+}
+
+export async function updateAdminUser(userId: string, input: Partial<Pick<UserProfile, "display_name" | "city" | "state" | "country" | "account_status" | "role">>, actorId: string) {
+  const { error } = await requireSupabase().from("profiles").update({ ...input, updated_at: new Date().toISOString() }).eq("id", userId);
+  if (error) throw error;
+  await logActivity(actorId, "user_updated", { fields: Object.keys(input) }, userId);
+}
+
+export async function deleteAdminUser(userId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.functions.invoke("delete-user", { body: { userId } });
+  if (error) throw error;
+}
+
+export async function updateAdminArtist(userId: string, profileData: BookingProfile, actorId: string) {
+  const client = requireSupabase();
+  const stored = await uploadEmbeddedProfileMedia(userId, profileData);
+  const { error: profileError } = await client.from("artist_profiles").update({
+    profile_data: stored,
+    profile_completion: profileCompletion(stored),
+    updated_at: new Date().toISOString(),
+  }).eq("user_id", userId);
+  if (profileError) throw profileError;
+  const genres = [stored.genre, ...stored.secondaryGenres.split(",")].map((item) => item.trim()).filter(Boolean);
+  const { error: directoryError } = await client.from("artist_directory").update({
+    artist_name: stored.name,
+    artist_type: stored.artistType,
+    city: stored.city,
+    region: stored.region,
+    genres,
+    bio: stored.oneLineBio || stored.shortBio,
+    profile_photo_url: stored.image,
+    cover_photo_url: stored.bandImage,
+    updated_at: new Date().toISOString(),
+  }).eq("user_id", userId);
+  if (directoryError) throw directoryError;
+  await logActivity(actorId, "artist_updated", { fields: ["profile_data", "directory"] }, userId);
 }
 
 export async function uploadPrivateDocument(userId: string, file: File, label: string) {
@@ -167,7 +233,11 @@ function emptyBookingInfo(): Opportunity["bookingInfo"] {
 }
 
 export async function loadPublicArtists(): Promise<PublicArtist[]> {
-  const { data, error } = await requireSupabase().from("artist_directory").select("*").eq("is_published", true).order("updated_at", { ascending: false });
+  const { data, error } = await requireSupabase()
+    .from("artist_directory")
+    .select("user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, website, spotify_url, youtube_url, instagram_url, performer_count, collaboration_interests, availability_public, next_available_dates, updated_at")
+    .eq("is_published", true)
+    .order("updated_at", { ascending: false });
   if (error) throw error;
   return (data || []) as PublicArtist[];
 }
@@ -176,6 +246,28 @@ export async function loadSavedArtistIds(userId: string): Promise<string[]> {
   const { data, error } = await requireSupabase().from("saved_artists").select("artist_user_id").eq("user_id", userId);
   if (error) throw error;
   return (data || []).map((row) => String(row.artist_user_id));
+}
+
+export async function loadArtistConnections(userId: string): Promise<ArtistConnection[]> {
+  const { data, error } = await requireSupabase()
+    .from("artist_connections")
+    .select("id, requester_id, recipient_id, status, created_at, updated_at")
+    .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data || []) as ArtistConnection[];
+}
+
+export async function requestArtistConnection(recipientId: string): Promise<ArtistConnection> {
+  const { data, error } = await requireSupabase().rpc("request_artist_connection", { recipient_id_input: recipientId });
+  if (error) throw error;
+  return data as ArtistConnection;
+}
+
+export async function updateArtistConnection(connectionId: string, action: "accept" | "decline" | "cancel"): Promise<ArtistConnection> {
+  const { data, error } = await requireSupabase().rpc("update_artist_connection", { connection_id_input: connectionId, action_input: action });
+  if (error) throw error;
+  return data as ArtistConnection;
 }
 
 export async function setArtistSaved(userId: string, artistUserId: string, saved: boolean) {
@@ -241,19 +333,7 @@ function profileCompletion(profile: BookingProfile) {
 }
 
 async function uploadEmbeddedProfileMedia(userId: string, profile: BookingProfile): Promise<BookingProfile> {
-  const next = { ...profile };
-  if (next.image.startsWith("data:")) next.image = await uploadDataUrl(userId, next.image, "profile");
-  if (next.bandImage.startsWith("data:")) next.bandImage = await uploadDataUrl(userId, next.bandImage, "cover");
-  return next;
-}
-
-async function uploadDataUrl(userId: string, dataUrl: string, label: string) {
-  const client = requireSupabase();
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
-  const extension = blob.type.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
-  const path = `${userId}/${label}-${Date.now()}.${extension}`;
-  const { error } = await client.storage.from("profile-media").upload(path, blob, { contentType: blob.type, upsert: true });
-  if (error) throw error;
-  return client.storage.from("profile-media").getPublicUrl(path).data.publicUrl;
+  // Cropped profile media is intentionally kept as a compact data URL. This
+  // avoids a broken public-storage URL preventing the saved profile from rendering.
+  return { ...profile };
 }
