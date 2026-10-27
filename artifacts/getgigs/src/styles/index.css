@@ -439,8 +439,15 @@ button, input, textarea, select { max-width: 100%; }
   background: #11100e;
   color: #fdfaf6;
 }
+.gg-community-card-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.gg-community-artist-card { min-width: 0; }
 .gg-artist-photo-area {
-  width: min(100%, 460px);
+  width: min(100%, 390px);
   margin-inline: auto;
 }
 .gg-artist-photo-deck,
@@ -554,6 +561,70 @@ button, input, textarea, select { max-width: 100%; }
   font-size: 9px;
   line-height: 1.5;
 }
+.gg-artist-gallery-editor {
+  margin: 18px 0 24px;
+  padding: 16px;
+  border: 1px solid rgba(0,0,0,.14);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  background: #f4efe7;
+}
+.gg-artist-gallery-editor > div:first-child strong { font: 500 17px/1 'Besley', serif; }
+.gg-artist-gallery-editor > div:first-child p,
+.gg-artist-gallery-editor > small {
+  margin: 6px 0 0;
+  color: rgba(0,0,0,.5);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.gg-artist-gallery-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.gg-artist-gallery-thumbnails > div {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #11100e;
+}
+.gg-artist-gallery-thumbnails img,
+.gg-artist-gallery-thumbnails > div > div[role="img"] {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gg-artist-gallery-thumbnails button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(17,16,14,.76);
+  color: #fff;
+  cursor: pointer;
+}
+.gg-artist-gallery-editor > .gg-add-gallery {
+  min-height: 40px;
+  justify-self: start;
+  padding: 0 13px;
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fdfaf6;
+  font-size: 9px;
+  cursor: pointer;
+}
+.gg-artist-gallery-editor > .gg-add-gallery:disabled { opacity: .55; cursor: default; }
 
 @media (min-width: 600px) {
   .yondr-product-shell {
@@ -627,10 +698,16 @@ button, input, textarea, select { max-width: 100%; }
     grid-template-columns: minmax(360px, .72fr) minmax(0, 1.28fr);
   }
   .gg-community-artist-hero {
-    min-height: 620px;
+    min-height: 560px;
     padding: 76px clamp(36px, 6vw, 96px) 54px;
-    grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
+    grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
     gap: clamp(54px, 7vw, 120px);
+  }
+  .gg-community-group { width: min(100%, 1240px); margin-inline: auto; }
+  .gg-community-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 280px));
+    justify-content: start;
+    gap: 14px;
   }
   .gg-artist-photo-area { margin-inline: 0; }
   .gg-community-artist-intro h1 { font-size: clamp(66px, 7vw, 112px); }

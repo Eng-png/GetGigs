@@ -103,23 +103,23 @@ export default function CommunityScreen({ currentUserId, onRequireAuth }: Props)
         <Group title="Same Genre" copy="Keep the vibe going with artists in a similar lane." artists={sameGenre} onSelect={setSelected} />
         <Group title="Available When You Are" copy="Only shared dates are compared here. Availability is not a confirmed booking." artists={availableWhenYouAre} onSelect={setSelected} />
         <Group title="Looking to Collaborate" copy="Artists who have added public collaboration interests." artists={collaborators} onSelect={setSelected} />
-        <section style={{ padding: "38px 20px 0" }}><span style={eyebrow}>All published artists</span><div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 14 }}>{filteredArtists.map((artist) => <ArtistCard key={artist.user_id} artist={artist} onSelect={setSelected} />)}</div></section>
+        <section className="gg-community-group" style={{ padding: "38px 20px 0" }}><span style={eyebrow}>All published artists</span><div className="gg-community-card-grid">{filteredArtists.map((artist) => <ArtistCard key={artist.user_id} artist={artist} onSelect={setSelected} />)}</div></section>
       </>}
     </div>
   </div>;
 }
 
 function ArtistCard({ artist, onSelect }: { artist: PublicArtist; onSelect: (artist: PublicArtist) => void }) {
-  return <button type="button" onClick={() => onSelect(artist)} style={cardButton}><SafeImage src={artist.profile_photo_url || artist.cover_photo_url} alt={artist.artist_name} style={{ display: "block", width: "100%", aspectRatio: "1.25", objectFit: "cover", borderRadius: 10 }} /><strong style={{ display: "block", marginTop: 9, fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{artist.artist_name || "Unnamed artist"}</strong><span style={cardMeta}>{[artist.genres[0], artist.artist_type, artist.city].filter(Boolean).join(" · ") || "Artist profile"}</span><span style={cardMeta}>{artist.availability_public && artist.next_available_dates.length ? `Available ${artist.next_available_dates[0]}` : "Message to connect"}</span><span style={cardAction}>View Profile · Message</span></button>;
+  return <button type="button" className="gg-community-artist-card" onClick={() => onSelect(artist)} style={cardButton}><SafeImage src={artist.profile_photo_url || artist.cover_photo_url} alt={artist.artist_name} style={{ display: "block", width: "100%", aspectRatio: "1.25", objectFit: "cover", borderRadius: 10 }} /><strong style={{ display: "block", marginTop: 9, fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{artist.artist_name || "Unnamed artist"}</strong><span style={cardMeta}>{[artist.genres[0], artist.artist_type, artist.city].filter(Boolean).join(" · ") || "Artist profile"}</span><span style={cardMeta}>{artist.availability_public && artist.next_available_dates.length ? `Available ${artist.next_available_dates[0]}` : "Message to connect"}</span><span style={cardAction}>View Profile · Message</span></button>;
 }
 
 function Group({ title, copy, artists, onSelect }: { title: string; copy: string; artists: PublicArtist[]; onSelect: (artist: PublicArtist) => void }) {
   if (!artists.length) return null;
-  return <section style={{ padding: "30px 20px 0" }}><span style={eyebrow}>{title}</span><p style={{ margin: "6px 0 12px", color: "rgba(0,0,0,.5)", fontSize: 9 }}>{copy}</p><div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 9 }}>{artists.map((artist) => <ArtistCard key={`${title}-${artist.user_id}`} artist={artist} onSelect={onSelect} />)}</div></section>;
+  return <section className="gg-community-group" style={{ padding: "30px 20px 0" }}><span style={eyebrow}>{title}</span><p style={{ margin: "6px 0 12px", color: "rgba(0,0,0,.5)", fontSize: 9 }}>{copy}</p><div className="gg-community-card-grid">{artists.map((artist) => <ArtistCard key={`${title}-${artist.user_id}`} artist={artist} onSelect={onSelect} />)}</div></section>;
 }
 
 function ArtistDetail({ artist, currentUserId, onBack, onCompare, onMessage }: { artist: PublicArtist; currentUserId?: string; onBack: () => void; onCompare: () => void; onMessage: () => void }) {
-  const photos = Array.from(new Set([artist.profile_photo_url, artist.cover_photo_url].filter(Boolean)));
+  const photos = Array.from(new Set([artist.profile_photo_url, artist.cover_photo_url, ...(artist.gallery_photo_urls || [])].filter(Boolean)));
   return <section className="community-scroll" style={{ ...scrollPage, background: PAPER, color: INK }}>
     <section className="gg-community-artist-hero">
       <button type="button" onClick={onBack} style={heroBack}>← Back</button>

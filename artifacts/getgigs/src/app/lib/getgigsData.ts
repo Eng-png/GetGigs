@@ -14,6 +14,7 @@ export type PublicArtist = {
   bio: string;
   profile_photo_url: string;
   cover_photo_url: string;
+  gallery_photo_urls?: string[];
   website: string;
   spotify_url: string;
   youtube_url: string;
@@ -106,6 +107,10 @@ export async function saveArtistProfile(userId: string, profile: BookingProfile)
     genres_input: genres,
   });
   if (error) throw new Error(`Profile save failed (${error.code || "supabase"}): ${error.message}`);
+  const { error: galleryError } = await client.from("artist_directory").update({ gallery_photo_urls: stored.pressPhotoFiles }).eq("user_id", userId);
+  if (galleryError && !galleryError.message.includes("gallery_photo_urls")) {
+    console.warn("Profile saved, but public gallery sync failed.", galleryError);
+  }
   try {
     await logActivity(userId, "profile_updated", { profileCompletion: completion });
   } catch (error) {
@@ -262,13 +267,23 @@ function emptyBookingInfo(): Opportunity["bookingInfo"] {
 }
 
 export async function loadPublicArtists(): Promise<PublicArtist[]> {
-  const { data, error } = await requireSupabase()
+  const client = requireSupabase();
+  const fields = "user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, gallery_photo_urls, website, spotify_url, youtube_url, instagram_url, performer_count, collaboration_interests, availability_public, next_available_dates, updated_at";
+  const legacyFields = "user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, website, spotify_url, youtube_url, instagram_url, performer_count, collaboration_interests, availability_public, next_available_dates, updated_at";
+  const result = await client
     .from("artist_directory")
-    .select("user_id, artist_name, artist_type, city, region, genres, bio, profile_photo_url, cover_photo_url, website, spotify_url, youtube_url, instagram_url, performer_count, collaboration_interests, availability_public, next_available_dates, updated_at")
+    .select(fields)
     .eq("is_published", true)
     .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data || []) as PublicArtist[];
+  let data = result.data as unknown as PublicArtist[] | null;
+  let queryError = result.error;
+  if (result.error?.message.includes("gallery_photo_urls")) {
+    const legacyResult = await client.from("artist_directory").select(legacyFields).eq("is_published", true).order("updated_at", { ascending: false });
+    data = legacyResult.data as unknown as PublicArtist[] | null;
+    queryError = legacyResult.error;
+  }
+  if (queryError) throw queryError;
+  return (data || []).map((artist) => ({ ...artist, gallery_photo_urls: Array.isArray(artist.gallery_photo_urls) ? artist.gallery_photo_urls : [] }));
 }
 
 export async function loadSavedArtistIds(userId: string): Promise<string[]> {

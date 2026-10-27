@@ -118,4 +118,18 @@ where routine_schema = 'public'
   and routine_name = 'send_artist_message';
 ```
 
+## Artist photo gallery migration
+
+Run `migrations/202610270001_artist_photo_gallery.sql` after the Artist Network migration. This adds the public gallery photos used by the swipeable artist profile photo deck. GitHub Pages does not apply this migration automatically.
+
+Verify the column after running it:
+
+```sql
+select column_name, data_type
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'artist_directory'
+  and column_name = 'gallery_photo_urls';
+```
+
 Only authenticated active artists can send messages to published artists. Conversation and message reads are limited by RLS to the two participants.
