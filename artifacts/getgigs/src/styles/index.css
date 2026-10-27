@@ -428,6 +428,133 @@ button, input, textarea, select { max-width: 100%; }
   color: #9e241c;
 }
 
+.gg-community-artist-hero {
+  position: relative;
+  min-height: 500px;
+  padding: 76px 20px 38px;
+  display: grid;
+  align-items: center;
+  gap: 34px;
+  overflow: hidden;
+  background: #11100e;
+  color: #fdfaf6;
+}
+.gg-artist-photo-area {
+  width: min(100%, 460px);
+  margin-inline: auto;
+}
+.gg-artist-photo-deck,
+.gg-artist-photo-empty {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.gg-artist-photo-deck {
+  touch-action: pan-y;
+  outline: none;
+}
+.gg-artist-photo-deck:focus-visible {
+  outline: 2px solid #e6e83c;
+  outline-offset: 8px;
+  border-radius: 26px;
+}
+.gg-artist-photo-card {
+  position: absolute;
+  inset: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 24px;
+  background: #292723;
+  box-shadow: 0 18px 50px rgba(0,0,0,.38);
+  transition: transform 280ms ease, opacity 180ms ease;
+  will-change: transform;
+}
+.gg-artist-photo-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 62%, rgba(0,0,0,.42));
+  pointer-events: none;
+}
+.gg-artist-photo-arrow {
+  position: absolute;
+  z-index: 10;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.48);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(17,16,14,.58);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.gg-artist-photo-arrow.previous { left: 22px; }
+.gg-artist-photo-arrow.next { right: 12px; }
+.gg-artist-photo-count {
+  position: absolute;
+  z-index: 10;
+  right: 24px;
+  bottom: 24px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(17,16,14,.65);
+  color: #fff;
+  font-size: 9px;
+  backdrop-filter: blur(8px);
+}
+.gg-artist-photo-dots {
+  min-height: 12px;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.gg-artist-photo-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.28);
+  transition: width 180ms ease, background 180ms ease;
+}
+.gg-artist-photo-dots span.active {
+  width: 18px;
+  border-radius: 999px;
+  background: #e6e83c;
+}
+.gg-artist-photo-empty {
+  border: 1px dashed rgba(255,255,255,.34);
+  border-radius: 24px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  background: #24221f;
+  color: rgba(255,255,255,.62);
+  text-align: center;
+}
+.gg-artist-photo-empty strong { color: #fff; font: 500 24px/1 'Besley', serif; }
+.gg-artist-photo-empty span { font-size: 9px; }
+.gg-community-artist-intro { min-width: 0; }
+.gg-community-artist-intro h1 {
+  margin: 12px 0 0;
+  font: 500 clamp(44px, 10vw, 70px)/.92 'Nyght Serif', 'Iowan Old Style', 'Times New Roman', serif;
+  letter-spacing: -2px;
+  overflow-wrap: anywhere;
+}
+.gg-community-artist-intro p { margin: 18px 0 0; font-size: 11px; }
+.gg-community-artist-intro small {
+  display: block;
+  max-width: 420px;
+  margin-top: 28px;
+  color: rgba(255,255,255,.58);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
 @media (min-width: 600px) {
   .yondr-product-shell {
     padding: clamp(0px, 1.7vw, 24px);
@@ -499,6 +626,14 @@ button, input, textarea, select { max-width: 100%; }
     border-radius: 0;
     grid-template-columns: minmax(360px, .72fr) minmax(0, 1.28fr);
   }
+  .gg-community-artist-hero {
+    min-height: 620px;
+    padding: 76px clamp(36px, 6vw, 96px) 54px;
+    grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
+    gap: clamp(54px, 7vw, 120px);
+  }
+  .gg-artist-photo-area { margin-inline: 0; }
+  .gg-community-artist-intro h1 { font-size: clamp(66px, 7vw, 112px); }
   .gg-admin-page,
   .gg-venue-form {
     padding-top: clamp(28px, 3vw, 48px);

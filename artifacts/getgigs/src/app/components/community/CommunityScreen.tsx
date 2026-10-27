@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ExternalLink, MapPin, MessageCircle, Music2, Search, Users } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, ImageIcon, MapPin, MessageCircle, Music2, Search, Users } from "lucide-react";
 import type { PublicArtist } from "../../lib/getgigsData";
 import { loadPublicArtists, sendArtistMessage } from "../../lib/getgigsData";
 import SafeImage from "../shared/SafeImage";
@@ -119,11 +119,31 @@ function Group({ title, copy, artists, onSelect }: { title: string; copy: string
 }
 
 function ArtistDetail({ artist, currentUserId, onBack, onCompare, onMessage }: { artist: PublicArtist; currentUserId?: string; onBack: () => void; onCompare: () => void; onMessage: () => void }) {
+  const photos = Array.from(new Set([artist.profile_photo_url, artist.cover_photo_url].filter(Boolean)));
   return <section className="community-scroll" style={{ ...scrollPage, background: PAPER, color: INK }}>
-    <section style={{ position: "relative", height: 500, overflow: "hidden", background: INK, color: PAPER }}><SafeImage src={artist.cover_photo_url || artist.profile_photo_url} alt={artist.artist_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /><div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.35), transparent 40%, rgba(0,0,0,.9))" }} /><button type="button" onClick={onBack} style={heroBack}>← Back</button><div style={{ position: "absolute", left: 22, right: 22, bottom: 24 }}><span style={{ color: CITRON, fontSize: 8, letterSpacing: 1.4, textTransform: "uppercase" }}>{[artist.artist_type, artist.city, artist.region].filter(Boolean).join(" · ")}</span><h1 style={{ margin: "8px 0 0", fontFamily: SERIF, fontSize: 44, fontWeight: 500 }}>{artist.artist_name || "Unnamed artist"}</h1><p style={{ margin: "12px 0 0", fontSize: 10 }}>{artist.genres.join(" · ")}</p></div></section>
+    <section className="gg-community-artist-hero">
+      <button type="button" onClick={onBack} style={heroBack}>← Back</button>
+      <ArtistPhotoDeck photos={photos} artistName={artist.artist_name || "Artist"} />
+      <div className="gg-community-artist-intro"><span style={{ color: CITRON, fontSize: 8, letterSpacing: 1.4, textTransform: "uppercase" }}>{[artist.artist_type, artist.city, artist.region].filter(Boolean).join(" · ")}</span><h1>{artist.artist_name || "Unnamed artist"}</h1><p>{artist.genres.join(" · ")}</p><small>Swipe the photo card or use the arrows to view this artist’s uploaded images.</small></div>
+    </section>
     <section style={{ padding: "20px", display: "flex", gap: 8 }}><button type="button" disabled={Boolean(currentUserId && artist.user_id === currentUserId)} onClick={onMessage} style={{ ...primaryButton, opacity: currentUserId && artist.user_id === currentUserId ? .55 : 1, cursor: currentUserId && artist.user_id === currentUserId ? "default" : "pointer" }}><MessageCircle size={14} /> {currentUserId && artist.user_id === currentUserId ? "Your profile" : currentUserId ? "Message" : "Log in to message"}</button><button type="button" onClick={onCompare} style={secondaryButton}>Compare availability</button></section>
     <section style={{ padding: "4px 20px calc(120px + env(safe-area-inset-bottom))" }}><span style={eyebrow}>About the artist</span><p style={{ margin: "12px 0 0", fontFamily: SERIF, fontSize: 25, lineHeight: 1.35 }}>{artist.bio || "This artist has not added a public bio yet."}</p><div style={{ marginTop: 28, borderTop: "1px solid rgba(0,0,0,.16)" }}><DetailRow icon={<Music2 size={15} />} label="Sound" value={artist.genres.join(" · ") || "Not added"} /><DetailRow icon={<MapPin size={15} />} label="Based in" value={[artist.city, artist.region].filter(Boolean).join(", ") || "Not added"} /><DetailRow icon={<Users size={15} />} label="Performer role" value={artist.artist_type || "Not added"} /><DetailRow icon={<Users size={15} />} label="Looking to collaborate" value={artist.collaboration_interests.join(" · ") || "Not added"} />{artist.availability_public && <DetailRow icon={<Music2 size={15} />} label="Shared dates" value={artist.next_available_dates.join(" · ") || "Not added"} />}</div></section>
   </section>;
+}
+
+function ArtistPhotoDeck({ photos, artistName }: { photos: string[]; artistName: string }) {
+  const [active, setActive] = useState(0);
+  const pointerStartX = useRef<number | null>(null);
+  const advance = (step: number) => setActive((current) => (current + step + photos.length) % photos.length);
+  if (!photos.length) return <div className="gg-artist-photo-empty"><ImageIcon size={30}/><strong>Artist photos</strong><span>No public photos added yet.</span></div>;
+  return <div className="gg-artist-photo-area">
+    <div className="gg-artist-photo-deck" role="group" aria-label={`${artistName} photos`} tabIndex={0} onKeyDown={(event) => { if (photos.length < 2) return; if (event.key === "ArrowLeft") advance(-1); if (event.key === "ArrowRight") advance(1); }} onPointerDown={(event) => { pointerStartX.current = event.clientX; }} onPointerUp={(event) => { if (pointerStartX.current === null || photos.length < 2) return; const distance = event.clientX - pointerStartX.current; pointerStartX.current = null; if (Math.abs(distance) >= 40) advance(distance < 0 ? 1 : -1); }} onPointerCancel={() => { pointerStartX.current = null; }}>
+      {photos.map((photo, index) => { const position = (index - active + photos.length) % photos.length; const front = position === 0; return <div key={photo} className="gg-artist-photo-card" aria-hidden={!front} style={{ zIndex: photos.length - position, opacity: position > 1 ? 0 : 1, transform: front ? "translate(0, 0) rotate(0deg)" : "translate(11px, -9px) rotate(2.5deg)" }}><SafeImage src={photo} alt={front ? `${artistName} photo ${active + 1}` : ""} style={{ width: "100%", height: "100%", objectFit: "cover" }}/><div className="gg-artist-photo-shade"/></div>; })}
+      {photos.length > 1 && <><button type="button" className="gg-artist-photo-arrow previous" aria-label="Previous artist photo" onClick={() => advance(-1)}><ChevronLeft size={18}/></button><button type="button" className="gg-artist-photo-arrow next" aria-label="Next artist photo" onClick={() => advance(1)}><ChevronRight size={18}/></button></>}
+      <span className="gg-artist-photo-count">{active + 1} / {photos.length}</span>
+    </div>
+    {photos.length > 1 && <div className="gg-artist-photo-dots" aria-hidden="true">{photos.map((_, index) => <span key={index} className={index === active ? "active" : ""}/>)}</div>}
+  </div>;
 }
 
 function Comparison({ artists, selectedIds, currentUserId, onBack, onToggle }: { artists: PublicArtist[]; selectedIds: string[]; currentUserId?: string; onBack: () => void; onToggle: (id: string) => void }) {
