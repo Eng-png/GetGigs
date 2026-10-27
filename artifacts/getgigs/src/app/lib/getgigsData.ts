@@ -444,7 +444,21 @@ export async function setAccountStatus(userId: string, accountStatus: "active" |
 }
 
 function profileCompletion(profile: BookingProfile) {
-  const checks = [profile.name, profile.genre, profile.city, profile.shortBio, profile.image, profile.bookingEmail, profile.videos.length, profile.setLengths.length, profile.availability.length];
+  const checks = [
+    profile.name,
+    profile.artistType,
+    profile.genre,
+    profile.city,
+    profile.region,
+    profile.country,
+    profile.image,
+    profile.oneLineBio,
+    profile.bookingEmail,
+    profile.spotify || profile.appleMusic || profile.youtube || profile.soundcloud || profile.bandcamp || profile.tracks.length,
+    profile.videos.length,
+    profile.setLengths.length,
+    profile.availability.length,
+  ];
   return Math.round(checks.filter(Boolean).length / checks.length * 100);
 }
 

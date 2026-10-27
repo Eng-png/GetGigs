@@ -904,3 +904,57 @@ button, input, textarea, select { max-width: 100%; }
     overflow: visible;
   }
 }
+
+.gg-required-mark {
+  color: #b3261e;
+  font-weight: 800;
+}
+
+.gg-required-note {
+  margin: 10px 0 16px;
+  color: rgba(0, 0, 0, 0.52);
+  font-size: 9px;
+}
+
+.gg-required-note span {
+  color: #b3261e;
+  font-weight: 800;
+}
+
+.gg-missing-value {
+  color: #b3261e !important;
+  font-weight: 650 !important;
+}
+
+.gg-essential-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.gg-essential-checklist > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+}
+
+.gg-essential-checklist .complete {
+  color: #586300;
+}
+
+.gg-essential-checklist .missing {
+  color: #b3261e;
+  font-weight: 650;
+}
+
+.gg-essential-checklist b {
+  width: 12px;
+  text-align: center;
+}
+
+@media (max-width: 599px) {
+  .gg-essential-checklist {
+    grid-template-columns: 1fr;
+  }
+}
