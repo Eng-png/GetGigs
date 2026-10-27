@@ -35,6 +35,35 @@ export type ArtistConnection = {
   updated_at: string;
 };
 
+export type AvailabilityVisibility = "private" | "connections" | "public";
+export type ArtistAvailability = {
+  id: string;
+  artist_user_id: string;
+  starts_at: string;
+  ends_at: string;
+  timezone: string;
+  status: "available" | "tentative" | "unavailable";
+  note: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ArtistConversation = {
+  id: string;
+  participant_a: string;
+  participant_b: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ArtistMessage = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+};
+
 export type PostedOpportunity = {
   id: string;
   owner_id: string;
@@ -258,6 +287,50 @@ export async function loadArtistConnections(userId: string): Promise<ArtistConne
   return (data || []) as ArtistConnection[];
 }
 
+export async function loadOwnAvailability(userId: string, from?: string, to?: string): Promise<ArtistAvailability[]> {
+  let query = requireSupabase().from("artist_availability").select("id, artist_user_id, starts_at, ends_at, timezone, status, note, created_at, updated_at").eq("artist_user_id", userId).order("starts_at");
+  if (from) query = query.gte("starts_at", from);
+  if (to) query = query.lte("starts_at", to);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as ArtistAvailability[];
+}
+
+export async function loadSharedAvailability(artistIds: string[], from: string, to: string): Promise<ArtistAvailability[]> {
+  if (!artistIds.length) return [];
+  const { data, error } = await requireSupabase()
+    .from("artist_availability")
+    .select("id, artist_user_id, starts_at, ends_at, timezone, status, note, created_at, updated_at")
+    .in("artist_user_id", artistIds)
+    .gte("starts_at", from)
+    .lt("starts_at", to)
+    .order("starts_at");
+  if (error) throw error;
+  return (data || []) as ArtistAvailability[];
+}
+
+export async function upsertAvailability(input: Omit<ArtistAvailability, "id" | "created_at" | "updated_at"> & { id?: string }): Promise<ArtistAvailability> {
+  const { data, error } = await requireSupabase().from("artist_availability").upsert(input).select("id, artist_user_id, starts_at, ends_at, timezone, status, note, created_at, updated_at").single();
+  if (error) throw error;
+  return data as ArtistAvailability;
+}
+
+export async function deleteAvailability(userId: string, id: string): Promise<void> {
+  const { error } = await requireSupabase().from("artist_availability").delete().eq("id", id).eq("artist_user_id", userId);
+  if (error) throw error;
+}
+
+export async function loadAvailabilityVisibility(userId: string): Promise<AvailabilityVisibility> {
+  const { data, error } = await requireSupabase().from("artist_directory").select("availability_visibility").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return (data?.availability_visibility || "private") as AvailabilityVisibility;
+}
+
+export async function setAvailabilityVisibility(userId: string, visibility: AvailabilityVisibility): Promise<void> {
+  const { error } = await requireSupabase().rpc("set_artist_availability_visibility", { visibility_input: visibility });
+  if (error) throw error;
+}
+
 export async function requestArtistConnection(recipientId: string): Promise<ArtistConnection> {
   const { data, error } = await requireSupabase().rpc("request_artist_connection", { recipient_id_input: recipientId });
   if (error) throw error;
@@ -268,6 +341,34 @@ export async function updateArtistConnection(connectionId: string, action: "acce
   const { data, error } = await requireSupabase().rpc("update_artist_connection", { connection_id_input: connectionId, action_input: action });
   if (error) throw error;
   return data as ArtistConnection;
+}
+
+export async function loadArtistConversations(): Promise<ArtistConversation[]> {
+  const { data, error } = await requireSupabase()
+    .from("artist_conversations")
+    .select("id, participant_a, participant_b, created_at, updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data || []) as ArtistConversation[];
+}
+
+export async function loadArtistMessages(conversationId: string): Promise<ArtistMessage[]> {
+  const { data, error } = await requireSupabase()
+    .from("artist_messages")
+    .select("id, conversation_id, sender_id, body, created_at")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data || []) as ArtistMessage[];
+}
+
+export async function sendArtistMessage(recipientId: string, body: string): Promise<ArtistMessage> {
+  const { data, error } = await requireSupabase().rpc("send_artist_message", {
+    recipient_id_input: recipientId,
+    body_input: body,
+  });
+  if (error) throw error;
+  return data as ArtistMessage;
 }
 
 export async function setArtistSaved(userId: string, artistUserId: string, saved: boolean) {
