@@ -970,6 +970,7 @@ button, input, textarea, select { max-width: 100%; }
   .gg-quick-profile-editor :is(p, span, strong, small, button, label, a, h3),
   .gg-quick-profile-editor :is(input, textarea, select) {
     font-size: 16px !important;
+    font-family: "Nyght Serif", "Iowan Old Style", "Times New Roman", serif !important;
   }
 
   .gg-booking-profile-body :is(p, small),
