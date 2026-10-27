@@ -958,3 +958,30 @@ button, input, textarea, select { max-width: 100%; }
     grid-template-columns: 1fr;
   }
 }
+
+/* The profile was designed mobile-first with intentionally compact type.
+   On desktop, use the 16px bio copy as the baseline while preserving the
+   larger editorial headings and the existing mobile scale. */
+@media (min-width: 900px) {
+  .gg-booking-profile-body :is(p, span, strong, small, button, label, a, h3),
+  .gg-booking-profile-body :is(input, textarea, select),
+  .gg-profile-editor :is(p, span, strong, small, button, label, a, h3),
+  .gg-profile-editor :is(input, textarea, select),
+  .gg-quick-profile-editor :is(p, span, strong, small, button, label, a, h3),
+  .gg-quick-profile-editor :is(input, textarea, select) {
+    font-size: 16px !important;
+  }
+
+  .gg-booking-profile-body :is(p, small),
+  .gg-profile-editor :is(p, small),
+  .gg-quick-profile-editor :is(p, small) {
+    line-height: 1.5;
+  }
+
+  .gg-booking-profile-body button,
+  .gg-profile-editor button,
+  .gg-quick-profile-editor button {
+    min-height: 46px;
+    padding-inline: 18px !important;
+  }
+}

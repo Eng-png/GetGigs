@@ -70,7 +70,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
   if (bookerView) return <BookerPreview profile={profile} onBack={() => setBookerView(false)} />;
 
   return (
-    <div data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
+    <div className="gg-booking-profile" data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
       <style>{`.booking-profile-scroll::-webkit-scrollbar{display:none}`}</style>
       <div className="booking-profile-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 116 }}>
         <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageError={setSaveError} onShare={() => void copy(profileUrl, "Booking profile link")} onBooker={() => setBookerView(true)} />
@@ -82,7 +82,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
         </div>}
         {saveError && <div role="alert" style={{ margin: "14px 20px 0", padding: "11px 13px", borderRadius: 12, background: "#f7deda", color: "#812d24", fontSize: 10 }}>{saveError}</div>}
 
-        <div style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
+        <div className="gg-booking-profile-body" style={{ padding: "50px 20px 0", display: "grid", gap: 54 }}>
           <ProfileCompletion profile={profile} completion={completion} />
 
           {editSection === "artist" ? focusedEditor("artist") : <Section eyebrow="Reusable details" title="Artist Information" action={<SectionAction label="Edit" icon={<Pencil size={12} />} onClick={() => { setDraft(profile); setEditing(true); setAdvancedEditing(true); setEditSection("artist"); }} />}>
