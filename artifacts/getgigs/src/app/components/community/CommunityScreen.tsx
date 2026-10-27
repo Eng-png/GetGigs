@@ -48,7 +48,6 @@ export default function CommunityScreen({ currentUserId, onRequireAuth }: Props)
   const filteredArtists = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return artists.filter((artist) => {
-      if (artist.user_id === currentUserId) return false;
       const artistLocation = [artist.city, artist.region].filter(Boolean).join(", ");
       return (!normalizedQuery || [artist.artist_name, artist.artist_type, artist.bio, ...artist.genres, ...artist.collaboration_interests].join(" ").toLowerCase().includes(normalizedQuery))
         && (!genre || artist.genres.includes(genre))
@@ -76,6 +75,7 @@ export default function CommunityScreen({ currentUserId, onRequireAuth }: Props)
       setSelected(null);
     }} onMessage={() => {
       if (!currentUserId) onRequireAuth();
+      else if (selected.user_id === currentUserId) return;
       else setMessageTarget(selected);
     }} />;
   }
@@ -121,7 +121,7 @@ function Group({ title, copy, artists, onSelect }: { title: string; copy: string
 function ArtistDetail({ artist, currentUserId, onBack, onCompare, onMessage }: { artist: PublicArtist; currentUserId?: string; onBack: () => void; onCompare: () => void; onMessage: () => void }) {
   return <section style={{ minHeight: "100%", background: PAPER, color: INK }}>
     <section style={{ position: "relative", height: 500, overflow: "hidden", background: INK, color: PAPER }}><SafeImage src={artist.cover_photo_url || artist.profile_photo_url} alt={artist.artist_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /><div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.35), transparent 40%, rgba(0,0,0,.9))" }} /><button type="button" onClick={onBack} style={heroBack}>← Back</button><div style={{ position: "absolute", left: 22, right: 22, bottom: 24 }}><span style={{ color: CITRON, fontSize: 8, letterSpacing: 1.4, textTransform: "uppercase" }}>{[artist.artist_type, artist.city, artist.region].filter(Boolean).join(" · ")}</span><h1 style={{ margin: "8px 0 0", fontFamily: SERIF, fontSize: 44, fontWeight: 500 }}>{artist.artist_name || "Unnamed artist"}</h1><p style={{ margin: "12px 0 0", fontSize: 10 }}>{artist.genres.join(" · ")}</p></div></section>
-    <section style={{ padding: "20px", display: "flex", gap: 8 }}><button type="button" onClick={onMessage} style={primaryButton}><MessageCircle size={14} /> {currentUserId ? "Message" : "Log in to message"}</button><button type="button" onClick={onCompare} style={secondaryButton}>Compare availability</button></section>
+    <section style={{ padding: "20px", display: "flex", gap: 8 }}><button type="button" disabled={Boolean(currentUserId && artist.user_id === currentUserId)} onClick={onMessage} style={{ ...primaryButton, opacity: currentUserId && artist.user_id === currentUserId ? .55 : 1, cursor: currentUserId && artist.user_id === currentUserId ? "default" : "pointer" }}><MessageCircle size={14} /> {currentUserId && artist.user_id === currentUserId ? "Your profile" : currentUserId ? "Message" : "Log in to message"}</button><button type="button" onClick={onCompare} style={secondaryButton}>Compare availability</button></section>
     <section style={{ padding: "4px 20px 80px" }}><span style={eyebrow}>About the artist</span><p style={{ margin: "12px 0 0", fontFamily: SERIF, fontSize: 25, lineHeight: 1.35 }}>{artist.bio || "This artist has not added a public bio yet."}</p><div style={{ marginTop: 28, borderTop: "1px solid rgba(0,0,0,.16)" }}><DetailRow icon={<Music2 size={15} />} label="Sound" value={artist.genres.join(" · ") || "Not added"} /><DetailRow icon={<MapPin size={15} />} label="Based in" value={[artist.city, artist.region].filter(Boolean).join(", ") || "Not added"} /><DetailRow icon={<Users size={15} />} label="Performer role" value={artist.artist_type || "Not added"} /><DetailRow icon={<Users size={15} />} label="Looking to collaborate" value={artist.collaboration_interests.join(" · ") || "Not added"} />{artist.availability_public && <DetailRow icon={<Music2 size={15} />} label="Shared dates" value={artist.next_available_dates.join(" · ") || "Not added"} />}</div></section>
   </section>;
 }
