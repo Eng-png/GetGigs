@@ -82,7 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await loadProfile(data.session?.user.id);
       } catch {
-        setSession(null);
+        // Keep the Supabase session alive if the profile row is temporarily
+        // unavailable. A failed profile read must not log the user out.
         setProfile(null);
       } finally {
         if (active) setLoading(false);
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       window.setTimeout(() => {
-        void loadProfile(nextSession?.user.id).catch(() => { setSession(null); setProfile(null); }).finally(() => setLoading(false));
+        void loadProfile(nextSession?.user.id).catch(() => { setProfile(null); }).finally(() => setLoading(false));
       }, 0);
     });
     return () => {
