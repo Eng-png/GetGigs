@@ -650,3 +650,33 @@ button, input, textarea, select { max-width: 100%; }
     padding: 22px 18px;
   }
 }
+
+@media (max-width: 599px) {
+  html:has(.gg-welcome),
+  body:has(.gg-welcome),
+  body:has(.gg-welcome) #root {
+    height: auto;
+    min-height: 100%;
+  }
+  body:has(.gg-welcome) {
+    overflow-y: auto;
+  }
+  .gg-welcome {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .gg-welcome-copy {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  .gg-modal-layer {
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px calc(88px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+  .gg-modal-layer .gg-auth-modal {
+    max-height: none;
+    overflow: visible;
+  }
+}
