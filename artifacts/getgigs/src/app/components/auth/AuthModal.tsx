@@ -59,7 +59,7 @@ export default function AuthModal({ mode, signupRole = "artist", locked, adminLo
     }
   };
 
-  const title = mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your GetGigs account" : adminLogin ? "Admin login" : "Log in to GetGigs";
+  const title = mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your account" : adminLogin ? "Admin login" : "Log in to GetGigs";
   return (
     <div className="gg-modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !locked) onClose(); }}>
       <section className="gg-auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
@@ -72,9 +72,9 @@ export default function AuthModal({ mode, signupRole = "artist", locked, adminLo
         <form onSubmit={submit}>
           {mode === "signup" && <>
             <fieldset className="gg-role-choice">
-              <legend>What brings you to GetGigs?</legend>
-              <button type="button" className={role === "artist" ? "active" : ""} onClick={() => setRole("artist")}><strong>I’m an Artist</strong><span>Find gigs and build a booking profile</span></button>
-              <button type="button" className={role === "booker" ? "active" : ""} onClick={() => setRole("booker")}><strong>I’m Looking for Artists</strong><span>Discover talent and post opportunities</span></button>
+              <legend>What do you want to do?</legend>
+              <button type="button" className={role === "artist" ? "active" : ""} onClick={() => setRole("artist")}><strong>Find gigs</strong><span>Artist account</span></button>
+              <button type="button" className={role === "booker" ? "active" : ""} onClick={() => setRole("booker")}><strong>Find artists</strong><span>Booker account</span></button>
             </fieldset>
             <label>{role === "artist" ? "Artist or band name" : "Your name or organization"}<input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={role === "artist" ? "Your artist name" : "Your organization"}/></label>
           </>}

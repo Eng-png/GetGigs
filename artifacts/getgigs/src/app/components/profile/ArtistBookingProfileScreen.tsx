@@ -26,6 +26,8 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
   const [saveError, setSaveError] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
   const completion = profileCompletion(profile);
+  const profileSlug = profile.name.trim() ? profile.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "your-profile";
+  const profileUrl = `https://getgigs.com/${profileSlug}`;
 
   const flash = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 1800); };
   const persist = async (value: BookingProfile, message?: string) => {
@@ -71,7 +73,7 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
     <div data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
       <style>{`.booking-profile-scroll::-webkit-scrollbar{display:none}`}</style>
       <div className="booking-profile-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 116 }}>
-        <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageError={setSaveError} onShare={() => void copy("https://getgigs.com/mayarivers", "Booking profile link")} onBooker={() => setBookerView(true)} />
+        <ProfileHeader profile={editing ? draft : profile} completion={completion} onEdit={() => { setDraft(profile); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onNameChange={(name) => { setDraft({ ...draft, name }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageChange={(image) => { setDraft({ ...draft, image }); setEditing(true); setAdvancedEditing(false); setEditSection(null); }} onImageError={setSaveError} onShare={() => void copy(profileUrl, "Booking profile link")} onBooker={() => setBookerView(true)} />
 
         {editing && !editSection && <div ref={editorRef}>
           {advancedEditing
@@ -118,8 +120,8 @@ export default function ArtistBookingProfileScreen({ profile, onChange, onManage
 
           {editSection === "press" ? focusedEditor("press") : <Section eyebrow="Press materials" title="Press Kit / EPK" action={editAction("press")}>
             <div style={{ padding: 18, borderRadius: 18, background: "#f0ebe3" }}><p style={{ margin: 0, fontFamily: SERIF, fontSize: 18 }}>{profile.pressQuotes[0]}</p><p style={{ margin: "14px 0 0", color: "rgba(0,0,0,.52)", fontSize: 10 }}>{profile.notablePerformances.join(" · ")}</p></div>
-            <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}><SectionAction label="View EPK" icon={<Eye size={12} />} onClick={() => flash("EPK preview opened")} /><SectionAction label="Share EPK" icon={<Share2 size={12} />} onClick={() => void copy("https://getgigs.com/mayarivers/epk", "EPK link")} /><SectionAction label="Download EPK" icon={<Download size={12} />} onClick={() => flash("EPK download is mocked for this MVP")} /></div>
-            <div style={{ marginTop: 15, padding: 13, borderRadius: 12, border: "1px solid rgba(0,0,0,.14)", fontSize: 10 }}>getgigs.com/mayarivers</div>
+            <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}><SectionAction label="View EPK" icon={<Eye size={12} />} onClick={() => flash("EPK preview opened")} /><SectionAction label="Share EPK" icon={<Share2 size={12} />} onClick={() => void copy(`${profileUrl}/epk`, "EPK link")} /><SectionAction label="Download EPK" icon={<Download size={12} />} onClick={() => flash("EPK download is mocked for this MVP")} /></div>
+            <div style={{ marginTop: 15, padding: 13, borderRadius: 12, border: "1px solid rgba(0,0,0,.14)", fontSize: 10 }}>{profileUrl.replace("https://", "")}</div>
           </Section>}
 
           {editSection === "rider" ? focusedEditor("rider") : <TechnicalRider profile={profile} flash={flash} action={editAction("rider")} />}

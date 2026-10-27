@@ -1,17 +1,15 @@
-import { ArrowRight, Building2, LogIn, Music2, Play, Sparkles } from "lucide-react";
+import { Building2, Compass, LogIn, Sparkles, UserPlus } from "lucide-react";
 
 type Props = {
-  onSignUpArtist: () => void;
-  onSignUpBooker: () => void;
+  onSignUp: () => void;
   onLogIn: () => void;
   onAdminLogin: () => void;
   onGuest: () => void;
-  onDemo: () => void;
   title?: string;
   description?: string;
 };
 
-export default function WelcomeScreen({ onSignUpArtist, onSignUpBooker, onLogIn, onAdminLogin, onGuest, onDemo, title = "Find the right stage—or the right sound.", description = "Artists build one booking-ready profile and discover compatible rooms. Venues, promoters, and organizers discover artists ready to play." }: Props) {
+export default function WelcomeScreen({ onSignUp, onLogIn, onAdminLogin, onGuest, title = "Find the right stage—or the right sound.", description = "Artists build one booking-ready profile and discover compatible rooms. Venues, promoters, and organizers discover artists ready to play." }: Props) {
   return (
     <main className="gg-welcome">
       <div className="gg-welcome-art" aria-hidden="true"><span>91%</span><span>87%</span><span>83%</span></div>
@@ -21,14 +19,12 @@ export default function WelcomeScreen({ onSignUpArtist, onSignUpBooker, onLogIn,
         <h1>{title}</h1>
         <p>{description}</p>
         <div className="gg-welcome-actions gg-welcome-auth-actions">
-          <button type="button" className="primary" onClick={onSignUpArtist}><Music2 size={15}/> Sign up as Artist <ArrowRight size={14}/></button>
-          <button type="button" className="primary booker" onClick={onSignUpBooker}><Building2 size={15}/> Sign up as Looking for Artist</button>
+          <button type="button" className="primary" onClick={onSignUp}><UserPlus size={15}/> Create account</button>
           <button type="button" onClick={onLogIn}><LogIn size={15}/> Log In</button>
-          <button type="button" className="gg-admin-login-button" onClick={onAdminLogin}><Building2 size={15}/> Admin login</button>
-          <button type="button" onClick={onGuest}>Take a Look as Guest</button>
-          <button type="button" className="demo" onClick={onDemo}><Play size={15} fill="currentColor"/> Demo</button>
+          <button type="button" className="guest" onClick={onGuest}><Compass size={15}/> Explore as Guest</button>
         </div>
-        <small>Guest browsing is open. Saving, contacting, posting, and private booking details require an account.</small>
+        <small>Explore without an account, save opportunities locally, and try a blank artist profile. Create an account when you want to keep your work across devices.</small>
+        <button type="button" className="gg-admin-login-link" onClick={onAdminLogin}><Building2 size={12}/> Admin login</button>
       </section>
     </main>
   );

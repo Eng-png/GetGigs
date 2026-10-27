@@ -151,7 +151,7 @@ export const MAYA_PROFILE: BookingProfile = {
   shareAvailability: true,
 };
 
-/** Blank starting point for a real prototype account. Demo mode deliberately uses MAYA_PROFILE. */
+/** Blank starting point for new accounts and account-free guest exploration. */
 export const EMPTY_PROFILE: BookingProfile = {
   ...MAYA_PROFILE,
   name: "",
@@ -208,6 +208,7 @@ export const EMPTY_PROFILE: BookingProfile = {
   shows: [],
   pressQuotes: [],
   notablePerformances: [],
+  rider: { members: [], inputs: [], backline: "", monitors: "", microphones: "", lighting: "", power: "", hospitality: "" },
   availability: [],
   preferences: { capacity: "", gigTypes: [], compatibleArtists: "", travelRadius: "", cities: "", minimumFee: "", touring: false },
   networkInterests: "",
