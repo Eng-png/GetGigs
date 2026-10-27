@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { ArrowLeft, MapPin, Music2, Play, Users } from "lucide-react";
-
-import deck1 from "../../../imports/deck-1.png";
-import deck2 from "../../../imports/deck-2.png";
-import deck3 from "../../../imports/deck-3.png";
-import deck4 from "../../../imports/deck-4.png";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ExternalLink, MapPin, MessageCircle, Music2, Search, Users } from "lucide-react";
+import type { PublicArtist } from "../../lib/getgigsData";
+import { loadPublicArtists, sendArtistMessage } from "../../lib/getgigsData";
+import SafeImage from "../shared/SafeImage";
+import AvailabilityCalendar from "../availability/AvailabilityCalendar";
 
 const FONT = "'Google Sans Flex', 'Google Sans', Inter, sans-serif";
 const SERIF = "'Nyght Serif', 'Iowan Old Style', 'Times New Roman', serif";
@@ -13,113 +12,173 @@ const INK = "#11100e";
 const CITRON = "#e6e83c";
 const GOLD = "#bd8e3c";
 
-type Artist = {
-  id: string;
-  name: string;
-  type: string;
-  city: string;
-  genres: string[];
-  image: string;
-  bio: string;
-  live: string;
-  lookingFor: string;
-};
+type Props = { currentUserId?: string; onRequireAuth: () => void };
 
-const ARTISTS: Artist[] = [
-  { id: "soft-static", name: "Soft Static", type: "Band", city: "Boston, MA", genres: ["Indie rock", "Dream pop"], image: deck1, bio: "Warm guitars, close harmonies, and patient songs made for rooms where the audience leans in.", live: "Four-piece band", lookingFor: "Listening rooms · Independent clubs" },
-  { id: "nia-vale", name: "Nia Vale", type: "Solo artist", city: "Cambridge, MA", genres: ["R&B", "Alternative soul"], image: deck2, bio: "Intimate alternative soul carried by layered vocals, keys, and a quietly magnetic live set.", live: "Solo with keys · Trio available", lookingFor: "Intimate stages · Support slots" },
-  { id: "paper-satellites", name: "Paper Satellites", type: "Band", city: "Providence, RI", genres: ["Indie pop", "Alternative"], image: deck3, bio: "Bright, restless indie pop with a live show that moves between sharp hooks and open-ended noise.", live: "Five-piece band", lookingFor: "Clubs · All-ages rooms" },
-  { id: "mossline", name: "Mossline", type: "Duo", city: "Portland, ME", genres: ["Folk", "Ambient"], image: deck4, bio: "A quiet collision of fingerpicked guitar, field recordings, and two voices finding the same horizon.", live: "Acoustic duo", lookingFor: "Listening rooms · Art spaces" },
-];
+export default function CommunityScreen({ currentUserId, onRequireAuth }: Props) {
+  const [artists, setArtists] = useState<PublicArtist[]>([]);
+  const [selected, setSelected] = useState<PublicArtist | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
+  const [genre, setGenre] = useState("");
+  const [location, setLocation] = useState("");
+  const [artistType, setArtistType] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [interest, setInterest] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [messageTarget, setMessageTarget] = useState<PublicArtist | null>(null);
 
-export default function CommunityScreen() {
-  const [selected, setSelected] = useState<Artist | null>(null);
-  return (
-    <div data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
-      <style>{`.community-scroll::-webkit-scrollbar{display:none}`}</style>
-      <div className="community-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 112 }}>
-        {selected ? <ArtistDetail artist={selected} onBack={() => setSelected(null)} /> : <CommunityIndex onSelect={setSelected} />}
-      </div>
-    </div>
-  );
-}
+  useEffect(() => {
+    let active = true;
+    loadPublicArtists().then((next) => {
+      if (active) setArtists(next);
+    }).catch((caught) => {
+      if (active) setError(caught instanceof Error ? caught.message : "Could not load published artist profiles.");
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
 
-function CommunityIndex({ onSelect }: { onSelect: (artist: Artist) => void }) {
-  return (
-    <>
-      <header style={{ padding: "58px 20px 26px" }}>
-        <span style={{ color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 1.7, textTransform: "uppercase" }}>Meet the people making the noise</span>
-        <h1 style={{ margin: "9px 0 0", fontFamily: SERIF, fontSize: 42, fontWeight: 500, lineHeight: .95, letterSpacing: -2 }}>Community</h1>
-        <p style={{ margin: "15px 0 0", maxWidth: 360, color: "rgba(0,0,0,.52)", fontSize: 11, lineHeight: 1.55 }}>Discover independent artists, see how they present their work, and find people building shows in nearby scenes.</p>
+  const genres = useMemo(() => Array.from(new Set(artists.flatMap((artist) => artist.genres))).sort(), [artists]);
+  const locations = useMemo(() => Array.from(new Set(artists.map((artist) => [artist.city, artist.region].filter(Boolean).join(", ")).filter(Boolean))).sort(), [artists]);
+  const types = useMemo(() => Array.from(new Set(artists.map((artist) => artist.artist_type).filter(Boolean))).sort(), [artists]);
+  const interests = useMemo(() => Array.from(new Set(artists.flatMap((artist) => artist.collaboration_interests))).sort(), [artists]);
+  const viewer = artists.find((artist) => artist.user_id === currentUserId);
+  const filteredArtists = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return artists.filter((artist) => {
+      const artistLocation = [artist.city, artist.region].filter(Boolean).join(", ");
+      return (!normalizedQuery || [artist.artist_name, artist.artist_type, artist.bio, ...artist.genres, ...artist.collaboration_interests].join(" ").toLowerCase().includes(normalizedQuery))
+        && (!genre || artist.genres.includes(genre))
+        && (!location || artistLocation === location)
+        && (!artistType || artist.artist_type === artistType)
+        && (!availability || artist.next_available_dates.length > 0)
+        && (!interest || artist.collaboration_interests.includes(interest));
+    });
+  }, [artists, artistType, availability, currentUserId, genre, interest, location, query]);
+  const recommended = useMemo(() => [...filteredArtists].sort((a, b) => matchScore(b, viewer) - matchScore(a, viewer)).slice(0, 4), [filteredArtists, viewer]);
+  const sameGenre = useMemo(() => filteredArtists.filter((artist) => viewer && artist.genres.some((item) => viewer.genres.includes(item))).slice(0, 4), [filteredArtists, viewer]);
+  const availableWhenYouAre = useMemo(() => filteredArtists.filter((artist) => viewer && artist.availability_public && artist.next_available_dates.some((date) => viewer.next_available_dates.includes(date))).slice(0, 4), [filteredArtists, viewer]);
+  const collaborators = useMemo(() => filteredArtists.filter((artist) => artist.collaboration_interests.length > 0).slice(0, 4), [filteredArtists]);
+
+  if (messageTarget) {
+    return <MessageComposer artist={messageTarget} currentUserId={currentUserId} onRequireAuth={onRequireAuth} onClose={() => setMessageTarget(null)} />;
+  }
+  if (compareIds.length > 0) {
+    return <Comparison artists={artists} selectedIds={compareIds} currentUserId={currentUserId} onBack={() => setCompareIds([])} onToggle={(id) => setCompareIds((current) => current.includes(id) ? current.length > 2 ? current.filter((value) => value !== id) : current : [...current, id])} />;
+  }
+  if (selected) {
+    return <ArtistDetail artist={selected} currentUserId={currentUserId} onBack={() => setSelected(null)} onCompare={() => {
+      const partner = filteredArtists.find((artist) => artist.user_id !== selected.user_id);
+      setCompareIds([selected.user_id, ...(partner ? [partner.user_id] : [])]);
+      setSelected(null);
+    }} onMessage={() => {
+      if (!currentUserId) onRequireAuth();
+      else if (selected.user_id === currentUserId) return;
+      else setMessageTarget(selected);
+    }} />;
+  }
+
+  return <div data-no-edit style={{ width: "100%", height: "100%", overflow: "hidden", background: PAPER, color: INK, fontFamily: FONT }}>
+    <style>{`.community-scroll::-webkit-scrollbar{display:none}`}</style>
+    <div className="community-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 112 }}>
+      <header style={{ padding: "58px 20px 20px" }}>
+        <span style={eyebrow}>Find collaborators and build the next show</span>
+        <h1 style={heading}>Artist Network</h1>
+        <p style={intro}>Discover published artists, find your musical and schedule fit, and message when the vibe feels right.</p>
       </header>
-
-      <section style={{ padding: "0 20px" }}>
-        <button type="button" onClick={() => onSelect(ARTISTS[0])} style={{ position: "relative", width: "100%", height: 360, padding: 0, overflow: "hidden", border: 0, borderRadius: 22, background: INK, color: PAPER, textAlign: "left", cursor: "pointer" }}>
-          <img src={ARTISTS[0].image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <span style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.86) 100%)" }} />
-          <span style={{ position: "absolute", top: 15, left: 15, padding: "8px 11px", borderRadius: 999, background: CITRON, color: INK, fontSize: 8, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Featured artist</span>
-          <span style={{ position: "absolute", left: 18, right: 18, bottom: 18 }}>
-            <strong style={{ display: "block", fontFamily: SERIF, fontSize: 34, fontWeight: 500, lineHeight: 1 }}>{ARTISTS[0].name}</strong>
-            <span style={{ display: "block", marginTop: 8, color: "rgba(255,255,255,.78)", fontSize: 9 }}>{ARTISTS[0].type} · {ARTISTS[0].city}</span>
-            <span style={{ display: "block", marginTop: 6, color: CITRON, fontSize: 9 }}>{ARTISTS[0].genres.join(" · ")}</span>
-          </span>
-        </button>
-      </section>
-
-      <section style={{ padding: "48px 20px 0" }}>
-        <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", marginBottom: 18 }}>
-          <div><span style={{ color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Artist profiles</span><h2 style={{ margin: "6px 0 0", fontFamily: SERIF, fontSize: 28, fontWeight: 500 }}>Around the scene</h2></div>
-          <span style={{ color: "rgba(0,0,0,.35)", fontSize: 9 }}>{ARTISTS.length} artists</span>
+      <section style={{ display: "grid", gap: 9, padding: "0 20px" }}>
+        <label style={searchLabel}><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search artists, sounds, roles" aria-label="Search artists" /></label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
+          <Select value={genre} onChange={setGenre} label="All genres" options={genres} />
+          <Select value={location} onChange={setLocation} label="All locations" options={locations} />
+          <Select value={artistType} onChange={setArtistType} label="All performer roles" options={types} />
+          <Select value={availability} onChange={setAvailability} label="Any availability" options={["Has shared dates"]} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-          {ARTISTS.slice(1).map((artist, index) => (
-            <button key={artist.id} type="button" onClick={() => onSelect(artist)} style={{ gridColumn: index === 2 ? "1 / -1" : undefined, padding: 0, overflow: "hidden", border: "1px solid rgba(0,0,0,.15)", borderRadius: 17, background: PAPER, color: INK, textAlign: "left", cursor: "pointer" }}>
-              <img src={artist.image} alt="" style={{ display: "block", width: "100%", height: index === 2 ? 210 : 165, objectFit: "cover" }} />
-              <span style={{ display: "block", padding: 13 }}>
-                <strong style={{ display: "block", fontFamily: SERIF, fontSize: 19, fontWeight: 500 }}>{artist.name}</strong>
-                <span style={{ display: "block", marginTop: 5, color: "rgba(0,0,0,.5)", fontSize: 8 }}>{artist.city}</span>
-                <span style={{ display: "block", marginTop: 6, color: GOLD, fontSize: 8 }}>{artist.genres.join(" · ")}</span>
-              </span>
-            </button>
-          ))}
-        </div>
+        <Select value={interest} onChange={setInterest} label="All collaboration interests" options={interests} />
       </section>
-    </>
-  );
+      {loading ? <EmptyState title="Loading artist profiles…" copy="Published profiles will appear here." /> : error ? <EmptyState title="Artist Network unavailable" copy={error} /> : !artists.length ? <EmptyState title="No published artist profiles yet" copy="Artists appear here automatically after they publish their profiles." /> : !filteredArtists.length ? <EmptyState title="No matching artists" copy="Try a different name, genre, role, location, or collaboration filter." /> : <>
+        <Group title="Recommended for You" copy="Artists whose sound, role, location, or collab goals line up with yours." artists={recommended} onSelect={setSelected} />
+        <Group title="Same Genre" copy="Keep the vibe going with artists in a similar lane." artists={sameGenre} onSelect={setSelected} />
+        <Group title="Available When You Are" copy="Only shared dates are compared here. Availability is not a confirmed booking." artists={availableWhenYouAre} onSelect={setSelected} />
+        <Group title="Looking to Collaborate" copy="Artists who have added public collaboration interests." artists={collaborators} onSelect={setSelected} />
+        <section style={{ padding: "38px 20px 0" }}><span style={eyebrow}>All published artists</span><div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 14 }}>{filteredArtists.map((artist) => <ArtistCard key={artist.user_id} artist={artist} onSelect={setSelected} />)}</div></section>
+      </>}
+    </div>
+  </div>;
 }
 
-function ArtistDetail({ artist, onBack }: { artist: Artist; onBack: () => void }) {
-  return (
-    <>
-      <section style={{ position: "relative", height: 560, overflow: "hidden", background: INK, color: PAPER }}>
-        <img src={artist.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.44), transparent 42%, rgba(0,0,0,.88))" }} />
-        <button type="button" onClick={onBack} aria-label="Back to community" style={{ position: "absolute", top: 22, left: 20, width: 38, height: 38, border: "1px solid rgba(255,255,255,.45)", borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(0,0,0,.3)", color: PAPER, cursor: "pointer" }}><ArrowLeft size={17} /></button>
-        <div style={{ position: "absolute", left: 22, right: 22, bottom: 25 }}>
-          <span style={{ color: CITRON, fontSize: 8, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase" }}>{artist.type} · {artist.city}</span>
-          <h1 style={{ margin: "8px 0 0", fontFamily: SERIF, fontSize: 46, fontWeight: 500, lineHeight: .95, letterSpacing: -2 }}>{artist.name}</h1>
-          <p style={{ margin: "13px 0 0", color: "rgba(255,255,255,.78)", fontSize: 9 }}>{artist.genres.join(" · ")}</p>
-        </div>
-      </section>
+function ArtistCard({ artist, onSelect }: { artist: PublicArtist; onSelect: (artist: PublicArtist) => void }) {
+  return <button type="button" onClick={() => onSelect(artist)} style={cardButton}><SafeImage src={artist.profile_photo_url || artist.cover_photo_url} alt={artist.artist_name} style={{ display: "block", width: "100%", aspectRatio: "1.25", objectFit: "cover", borderRadius: 10 }} /><strong style={{ display: "block", marginTop: 9, fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{artist.artist_name || "Unnamed artist"}</strong><span style={cardMeta}>{[artist.genres[0], artist.artist_type, artist.city].filter(Boolean).join(" · ") || "Artist profile"}</span><span style={cardMeta}>{artist.availability_public && artist.next_available_dates.length ? `Available ${artist.next_available_dates[0]}` : "Message to connect"}</span><span style={cardAction}>View Profile · Message</span></button>;
+}
 
-      <section style={{ padding: "48px 20px 0" }}>
-        <span style={{ color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>About the artist</span>
-        <p style={{ margin: "12px 0 0", fontFamily: SERIF, fontSize: 25, lineHeight: 1.35 }}>{artist.bio}</p>
-      </section>
+function Group({ title, copy, artists, onSelect }: { title: string; copy: string; artists: PublicArtist[]; onSelect: (artist: PublicArtist) => void }) {
+  if (!artists.length) return null;
+  return <section style={{ padding: "30px 20px 0" }}><span style={eyebrow}>{title}</span><p style={{ margin: "6px 0 12px", color: "rgba(0,0,0,.5)", fontSize: 9 }}>{copy}</p><div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 9 }}>{artists.map((artist) => <ArtistCard key={`${title}-${artist.user_id}`} artist={artist} onSelect={onSelect} />)}</div></section>;
+}
 
-      <section style={{ padding: "48px 20px 20px" }}>
-        <h2 style={{ margin: "0 0 18px", fontFamily: SERIF, fontSize: 29, fontWeight: 500 }}>Artist details</h2>
-        <div style={{ borderTop: "1px solid rgba(0,0,0,.18)" }}>
-          <DetailRow icon={<Play size={15} />} label="Live setup" value={artist.live} />
-          <DetailRow icon={<MapPin size={15} />} label="Based in" value={artist.city} />
-          <DetailRow icon={<Users size={15} />} label="Looking for" value={artist.lookingFor} />
-          <DetailRow icon={<Music2 size={15} />} label="Sound" value={artist.genres.join(" · ")} />
-        </div>
-      </section>
-    </>
-  );
+function ArtistDetail({ artist, currentUserId, onBack, onCompare, onMessage }: { artist: PublicArtist; currentUserId?: string; onBack: () => void; onCompare: () => void; onMessage: () => void }) {
+  return <section style={{ minHeight: "100%", background: PAPER, color: INK }}>
+    <section style={{ position: "relative", height: 500, overflow: "hidden", background: INK, color: PAPER }}><SafeImage src={artist.cover_photo_url || artist.profile_photo_url} alt={artist.artist_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /><div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.35), transparent 40%, rgba(0,0,0,.9))" }} /><button type="button" onClick={onBack} style={heroBack}>← Back</button><div style={{ position: "absolute", left: 22, right: 22, bottom: 24 }}><span style={{ color: CITRON, fontSize: 8, letterSpacing: 1.4, textTransform: "uppercase" }}>{[artist.artist_type, artist.city, artist.region].filter(Boolean).join(" · ")}</span><h1 style={{ margin: "8px 0 0", fontFamily: SERIF, fontSize: 44, fontWeight: 500 }}>{artist.artist_name || "Unnamed artist"}</h1><p style={{ margin: "12px 0 0", fontSize: 10 }}>{artist.genres.join(" · ")}</p></div></section>
+    <section style={{ padding: "20px", display: "flex", gap: 8 }}><button type="button" disabled={Boolean(currentUserId && artist.user_id === currentUserId)} onClick={onMessage} style={{ ...primaryButton, opacity: currentUserId && artist.user_id === currentUserId ? .55 : 1, cursor: currentUserId && artist.user_id === currentUserId ? "default" : "pointer" }}><MessageCircle size={14} /> {currentUserId && artist.user_id === currentUserId ? "Your profile" : currentUserId ? "Message" : "Log in to message"}</button><button type="button" onClick={onCompare} style={secondaryButton}>Compare availability</button></section>
+    <section style={{ padding: "4px 20px 80px" }}><span style={eyebrow}>About the artist</span><p style={{ margin: "12px 0 0", fontFamily: SERIF, fontSize: 25, lineHeight: 1.35 }}>{artist.bio || "This artist has not added a public bio yet."}</p><div style={{ marginTop: 28, borderTop: "1px solid rgba(0,0,0,.16)" }}><DetailRow icon={<Music2 size={15} />} label="Sound" value={artist.genres.join(" · ") || "Not added"} /><DetailRow icon={<MapPin size={15} />} label="Based in" value={[artist.city, artist.region].filter(Boolean).join(", ") || "Not added"} /><DetailRow icon={<Users size={15} />} label="Performer role" value={artist.artist_type || "Not added"} /><DetailRow icon={<Users size={15} />} label="Looking to collaborate" value={artist.collaboration_interests.join(" · ") || "Not added"} />{artist.availability_public && <DetailRow icon={<Music2 size={15} />} label="Shared dates" value={artist.next_available_dates.join(" · ") || "Not added"} />}</div></section>
+  </section>;
+}
+
+function Comparison({ artists, selectedIds, currentUserId, onBack, onToggle }: { artists: PublicArtist[]; selectedIds: string[]; currentUserId?: string; onBack: () => void; onToggle: (id: string) => void }) {
+  return <section style={{ minHeight: "100%", padding: "42px 20px 120px", background: PAPER }}><button type="button" onClick={onBack} style={backButton}>← Back to artists</button><h1 style={{ ...heading, fontSize: 36 }}>Compare gig windows</h1><p style={intro}>Choose two or more artists and find dates that work for the whole lineup.</p><div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 18 }}>{artists.filter((artist) => artist.user_id !== currentUserId).map((artist) => <button key={artist.user_id} type="button" onClick={() => onToggle(artist.user_id)} style={{ ...pillButton, background: selectedIds.includes(artist.user_id) ? INK : "#f4efe7", color: selectedIds.includes(artist.user_id) ? PAPER : INK }}>{artist.artist_name}</button>)}</div><AvailabilityCalendar userId={currentUserId} mode="shared" artistIds={selectedIds} title="Shared availability" /></section>;
+}
+
+function MessageComposer({ artist, currentUserId, onRequireAuth, onClose }: { artist: PublicArtist; currentUserId?: string; onRequireAuth: () => void; onClose: () => void }) {
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const send = async () => {
+    if (!currentUserId) return onRequireAuth();
+    setLoading(true); setError(""); setNotice("");
+    try { await sendArtistMessage(artist.user_id, body); setBody(""); setNotice("Message sent. Your conversation is saved."); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Could not send your message."); }
+    finally { setLoading(false); }
+  };
+  return <section style={{ minHeight: "100%", padding: "42px 20px 120px", background: PAPER }}><button type="button" onClick={onClose} style={backButton}>← Back to artists</button><div style={{ maxWidth: 620, margin: "24px auto 0", padding: 22, borderRadius: 20, background: "#f0ebe3" }}><span style={eyebrow}>Start a conversation</span><h1 style={{ ...heading, fontSize: 34 }}>Message {artist.artist_name || "this artist"}</h1><p style={intro}>Say hi, share a sound, or float a collab idea. Keep it friendly and specific.</p><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={7} placeholder="Hey, I like your sound..." style={textarea} /><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}><small style={cardMeta}>{body.length}/2000</small><button type="button" disabled={!body.trim() || loading} onClick={() => void send()} style={primaryButton}>{loading ? "Sending…" : <><MessageCircle size={14} /> Send message</>}</button></div>{notice && <p role="status" style={successText}>{notice}</p>}{error && <p role="alert" style={errorText}>{error}</p>}</div></section>;
+}
+
+function Select({ value, onChange, label, options }: { value: string; onChange: (value: string) => void; label: string; options: string[] }) {
+  return <select value={value} onChange={(event) => onChange(event.target.value)} style={filterInput} aria-label={label}><option value="">{label}</option>{options.map((option) => <option key={option}>{option}</option>)}</select>;
+}
+
+function EmptyState({ title, copy }: { title: string; copy: string }) {
+  return <section style={{ padding: "70px 20px", textAlign: "center" }}><h2 style={{ margin: 0, fontFamily: SERIF, fontSize: 28, fontWeight: 500 }}>{title}</h2><p style={{ margin: "12px auto 0", maxWidth: 420, color: "rgba(0,0,0,.5)", fontSize: 10 }}>{copy}</p></section>;
 }
 
 function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return <div style={{ minHeight: 70, padding: "13px 2px", borderBottom: "1px solid rgba(0,0,0,.18)", display: "grid", gridTemplateColumns: "26px 82px minmax(0,1fr)", alignItems: "center" }}><span>{icon}</span><span style={{ color: "rgba(0,0,0,.45)", fontSize: 9 }}>{label}</span><strong style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, textAlign: "right" }}>{value}</strong></div>;
+  return <div style={{ minHeight: 64, display: "grid", gridTemplateColumns: "26px 130px minmax(0,1fr)", alignItems: "center", borderBottom: "1px solid rgba(0,0,0,.16)" }}><span>{icon}</span><span style={cardMeta}>{label}</span><strong style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, textAlign: "right" }}>{value}</strong></div>;
 }
+
+function matchScore(artist: PublicArtist, viewer?: PublicArtist) {
+  if (!viewer) return 0;
+  const sharedGenres = artist.genres.filter((item) => viewer.genres.includes(item)).length;
+  const sharedInterests = artist.collaboration_interests.filter((item) => viewer.collaboration_interests.includes(item)).length;
+  const sameLocation = artist.city && viewer.city && artist.city.toLowerCase() === viewer.city.toLowerCase() ? 2 : 0;
+  const sharedDates = artist.availability_public ? artist.next_available_dates.filter((date) => viewer.next_available_dates.includes(date)).length : 0;
+  return sharedGenres * 4 + sharedInterests * 3 + sameLocation + sharedDates * 5;
+}
+
+const eyebrow: React.CSSProperties = { color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" };
+const heading: React.CSSProperties = { margin: "9px 0 0", fontFamily: SERIF, fontSize: 42, fontWeight: 500, lineHeight: .95, letterSpacing: -2 };
+const intro: React.CSSProperties = { margin: "14px 0 0", maxWidth: 500, color: "rgba(0,0,0,.52)", fontSize: 11, lineHeight: 1.55 };
+const searchLabel: React.CSSProperties = { minHeight: 42, padding: "0 12px", display: "flex", alignItems: "center", gap: 8, border: "1px solid rgba(0,0,0,.18)", borderRadius: 999, background: "#f4efe7" };
+const filterInput: React.CSSProperties = { minHeight: 40, width: "100%", padding: "0 10px", border: "1px solid rgba(0,0,0,.18)", borderRadius: 10, background: "#f4efe7", color: INK, fontFamily: FONT, fontSize: 10 };
+const cardButton: React.CSSProperties = { padding: 11, border: "1px solid rgba(0,0,0,.15)", borderRadius: 14, background: PAPER, color: INK, textAlign: "left", cursor: "pointer" };
+const cardMeta: React.CSSProperties = { display: "block", marginTop: 5, color: "rgba(0,0,0,.5)", fontSize: 8 };
+const cardAction: React.CSSProperties = { display: "block", marginTop: 9, color: GOLD, fontSize: 8, fontWeight: 700 };
+const primaryButton: React.CSSProperties = { minHeight: 40, padding: "0 16px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, border: 0, borderRadius: 999, background: CITRON, color: INK, fontFamily: FONT, fontSize: 10, fontWeight: 700, cursor: "pointer" };
+const secondaryButton: React.CSSProperties = { ...primaryButton, background: "#f4efe7", border: "1px solid rgba(0,0,0,.15)" };
+const pillButton: React.CSSProperties = { border: 0, borderRadius: 999, padding: "9px 13px", fontSize: 9, cursor: "pointer" };
+const backButton: React.CSSProperties = { ...secondaryButton, marginBottom: 18 };
+const heroBack: React.CSSProperties = { position: "absolute", top: 20, left: 20, padding: "8px 12px", border: "1px solid rgba(255,255,255,.5)", borderRadius: 999, background: "rgba(0,0,0,.35)", color: PAPER, cursor: "pointer" };
+const textarea: React.CSSProperties = { width: "100%", boxSizing: "border-box", marginTop: 16, padding: 12, resize: "vertical", border: "1px solid rgba(0,0,0,.16)", borderRadius: 12, background: PAPER, color: INK, fontFamily: FONT, fontSize: 11 };
+const successText: React.CSSProperties = { color: "#536000", fontSize: 9 };
+const errorText: React.CSSProperties = { color: "#812d24", fontSize: 9 };

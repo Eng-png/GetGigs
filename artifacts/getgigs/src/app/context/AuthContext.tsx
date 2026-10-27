@@ -2,6 +2,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { AppRole, UserProfile } from "../lib/authTypes";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { logActivity } from "../lib/getgigsData";
 
 type SignUpInput = {
   email: string;
@@ -81,7 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await loadProfile(data.session?.user.id);
       } catch {
-        setSession(null);
+        // Keep the Supabase session alive if the profile row is temporarily
+        // unavailable. A failed profile read must not log the user out.
         setProfile(null);
       } finally {
         if (active) setLoading(false);
@@ -90,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       window.setTimeout(() => {
-        void loadProfile(nextSession?.user.id).catch(() => { setSession(null); setProfile(null); }).finally(() => setLoading(false));
+        void loadProfile(nextSession?.user.id).catch(() => { setProfile(null); }).finally(() => setLoading(false));
       }, 0);
     });
     return () => {
@@ -121,10 +123,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       await loadProfile(data.user.id);
+      await logActivity(data.user.id, "login", { method: "password" });
     },
     sendPasswordReset: async (email) => {
       if (!supabase) throw new Error("Supabase has not been configured for this site yet.");
-      const redirectTo = `${window.location.origin}/reset-password`;
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const redirectTo = `${window.location.origin}${base}/reset-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
     },

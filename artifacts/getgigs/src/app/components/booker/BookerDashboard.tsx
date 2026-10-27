@@ -41,7 +41,10 @@ export default function BookerDashboard({ account }: { account: UserProfile }) {
         if (!active) return;
         setArtists(nextArtists);
         setSaved(new Set(nextSaved));
-        if (nextProfile) setProfile(nextProfile);
+        if (nextProfile) {
+          setProfile(nextProfile);
+          if (![nextProfile.organization_name, nextProfile.contact_name, nextProfile.location, nextProfile.venue_type, nextProfile.capacity, nextProfile.description].every((value) => value.trim().length > 0)) setTab("profile");
+        }
         setOpportunities(nextOpportunities);
       })
       .catch((error) => setNotice(error instanceof Error ? error.message : "Could not load the booker workspace."))
@@ -50,6 +53,7 @@ export default function BookerDashboard({ account }: { account: UserProfile }) {
   }, [account.id]);
 
   const savedArtists = useMemo(() => artists.filter((artist) => saved.has(artist.user_id)), [artists, saved]);
+  const profileComplete = useMemo(() => [profile.organization_name, profile.contact_name, profile.location, profile.venue_type, profile.capacity, profile.description].every((value) => value.trim().length > 0), [profile]);
   const toggleSaved = async (artistId: string) => {
     const nextSaved = !saved.has(artistId);
     setSaved((current) => { const next = new Set(current); nextSaved ? next.add(artistId) : next.delete(artistId); return next; });
@@ -60,16 +64,18 @@ export default function BookerDashboard({ account }: { account: UserProfile }) {
   return <div className="gg-role-shell">
     <header className="gg-role-header"><div><span className="gg-kicker">Looking for Artist</span><h1>{profile.organization_name || account.display_name || "Booker workspace"}</h1><p>Discover artists, prepare opportunities, and keep booking contacts in one place.</p></div></header>
     {notice && <div className="gg-role-notice" role="status">{notice}</div>}
+    {!loading && !profileComplete && <div className="gg-role-notice" role="status">Complete your organization / venue profile before discovering artists or posting opportunities.</div>}
     <div className="gg-role-content">
       {loading ? <EmptyState icon={<Music2/>} title="Loading artists…" copy="Your private workspace is being restored."/> : <>
-        {tab === "discover" && <ArtistGrid title="Discover Artists" artists={artists} saved={saved} onToggleSaved={toggleSaved}/>}
-        {tab === "saved" && <ArtistGrid title="Saved Artists" artists={savedArtists} saved={saved} onToggleSaved={toggleSaved}/>}
-        {tab === "post" && <OpportunityComposer profile={profile} opportunities={opportunities} onCreated={async () => { setOpportunities(await loadBookerOpportunities(account.id)); setNotice("Opportunity saved to your account."); }}/>}
-        {tab === "contacts" && <EmptyState icon={<Mail/>} title="Messages / Contacts" copy="Artist contact requests will appear here. Private artist details stay hidden until the artist shares them."/>}
-        {tab === "profile" && <BookerProfileEditor profile={profile} onChange={setProfile} onSave={async () => { await saveBookerProfile(profile); setNotice("Organization profile saved."); }}/>}
+        {tab === "profile" || !profileComplete ? <BookerProfileEditor profile={profile} onChange={setProfile} onSave={async () => { await saveBookerProfile(profile); setNotice("Organization profile saved."); }}/>: <>
+          {tab === "discover" && <ArtistGrid title="Discover Artists" artists={artists} saved={saved} onToggleSaved={toggleSaved}/>}
+          {tab === "saved" && <ArtistGrid title="Saved Artists" artists={savedArtists} saved={saved} onToggleSaved={toggleSaved}/>}
+          {tab === "post" && <OpportunityComposer profile={profile} opportunities={opportunities} onCreated={async () => { setOpportunities(await loadBookerOpportunities(account.id)); setNotice("Opportunity saved to your account."); }}/>}
+          {tab === "contacts" && <EmptyState icon={<Mail/>} title="Messages / Contacts" copy="Artist contact requests will appear here. Private artist details stay hidden until the artist shares them."/>}
+        </>}
       </>}
     </div>
-    <nav className="gg-role-nav" aria-label="Booker navigation">{NAV.map(([id,label,Icon]) => <button key={id} type="button" className={tab===id?"active":""} onClick={() => setTab(id)}><Icon size={18}/><span>{label}</span></button>)}</nav>
+    <nav className="gg-role-nav" aria-label="Booker navigation">{NAV.map(([id,label,Icon]) => <button key={id} type="button" className={tab===id?"active":""} onClick={() => { if (!profileComplete && id !== "profile") { setNotice("Complete your organization / venue profile first."); setTab("profile"); return; } setTab(id); }}><Icon size={18}/><span>{label}</span></button>)}</nav>
   </div>;
 }
 
@@ -91,7 +97,7 @@ function OpportunityComposer({ profile, opportunities, onCreated }: { profile: B
 function BookerProfileEditor({ profile, onChange, onSave }: { profile: BookerProfile; onChange: (profile: BookerProfile)=>void; onSave:()=>Promise<void> }) {
   const [busy,setBusy]=useState(false);
   const update=(key:keyof BookerProfile,value:string|string[])=>onChange({...profile,[key]:value});
-  return <section><div className="gg-role-title"><span className="gg-kicker">Organization profile</span><h2>Profile</h2><p>This private profile belongs only to your account. Public artist data does not reveal private booking contacts.</p></div><form className="gg-account-form" onSubmit={async(e)=>{e.preventDefault();setBusy(true);try{await onSave();}finally{setBusy(false)}}}><Field label="Organization / Venue name" value={profile.organization_name} onChange={(v)=>update("organization_name",v)}/><Field label="Contact name" value={profile.contact_name} onChange={(v)=>update("contact_name",v)}/><Field label="Website" value={profile.website} onChange={(v)=>update("website",v)}/><Field label="Location" value={profile.location} onChange={(v)=>update("location",v)}/><Field label="Venue type" value={profile.venue_type} onChange={(v)=>update("venue_type",v)}/><Field label="Capacity" value={profile.capacity} onChange={(v)=>update("capacity",v)}/><Field label="Genres" value={profile.genres.join(", ")} onChange={(v)=>update("genres",v.split(",").map(x=>x.trim()).filter(Boolean))}/><Field label="Description" wide multiline value={profile.description} onChange={(v)=>update("description",v)}/><button className="primary" disabled={busy}><Save size={15}/>{busy?"Saving…":"Save profile"}</button></form></section>;
+  return <section><div className="gg-role-title"><span className="gg-kicker">Organization profile</span><h2>Profile</h2><p>This private profile belongs only to your account. Complete the required organization details before using the venue workspace.</p></div><form className="gg-account-form" onSubmit={async(e)=>{e.preventDefault();setBusy(true);try{await onSave();}finally{setBusy(false)}}}><Field label="Organization / Venue name" value={profile.organization_name} required onChange={(v)=>update("organization_name",v)}/><Field label="Contact name" value={profile.contact_name} required onChange={(v)=>update("contact_name",v)}/><Field label="Website" value={profile.website} onChange={(v)=>update("website",v)}/><Field label="Location" value={profile.location} required onChange={(v)=>update("location",v)}/><Field label="Venue type" value={profile.venue_type} required onChange={(v)=>update("venue_type",v)}/><Field label="Capacity" value={profile.capacity} required onChange={(v)=>update("capacity",v)}/><Field label="Genres" value={profile.genres.join(", ")} onChange={(v)=>update("genres",v.split(",").map(x=>x.trim()).filter(Boolean))}/><Field label="Description" wide multiline required value={profile.description} onChange={(v)=>update("description",v)}/><button className="primary" disabled={busy}><Save size={15}/>{busy?"Saving…":"Save profile"}</button></form></section>;
 }
 
 function Field({ label, value, onChange, wide, multiline, required, placeholder, type="text" }: { label:string; value:string; onChange:(value:string)=>void; wide?:boolean; multiline?:boolean; required?:boolean; placeholder?:string; type?:string }) { return <label className={wide?"wide":""}><span>{label}</span>{multiline?<textarea rows={5} value={value} required={required} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)}/>:<input type={type} value={value} required={required} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)}/>}</label>; }
