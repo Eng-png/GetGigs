@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Building2, CalendarPlus, Mail, MapPin, Music2, Save, Search, UserRound } from "lucide-react";
+import { ArrowLeft, Bookmark, CalendarPlus, ExternalLink, Mail, MessageCircle, Music2, Save, Search, UserRound } from "lucide-react";
 import type { UserProfile } from "../../lib/authTypes";
 import { EMPTY_BOOKER_PROFILE, type BookerProfile } from "../../lib/authTypes";
 import {
@@ -12,7 +12,9 @@ import {
   setArtistSaved,
   type PostedOpportunity,
   type PublicArtist,
+  type BookingContact,
 } from "../../lib/getgigsData";
+import BookingMessages from "../messages/BookingMessages";
 import SafeImage from "../shared/SafeImage";
 
 type Tab = "discover" | "saved" | "post" | "contacts" | "profile";
@@ -33,6 +35,8 @@ export default function BookerDashboard({ account }: { account: UserProfile }) {
   const [opportunities, setOpportunities] = useState<PostedOpportunity[]>([]);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedArtist, setSelectedArtist] = useState<PublicArtist | null>(null);
+  const [messageContact, setMessageContact] = useState<BookingContact | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -68,23 +72,37 @@ export default function BookerDashboard({ account }: { account: UserProfile }) {
     <div className="gg-role-content">
       {loading ? <EmptyState icon={<Music2/>} title="Loading artists…" copy="Your private workspace is being restored."/> : <>
         {tab === "profile" || !profileComplete ? <BookerProfileEditor profile={profile} onChange={setProfile} onSave={async () => { await saveBookerProfile(profile); setNotice("Organization profile saved."); }}/>: <>
-          {tab === "discover" && <ArtistGrid title="Discover Artists" artists={artists} saved={saved} onToggleSaved={toggleSaved}/>}
-          {tab === "saved" && <ArtistGrid title="Saved Artists" artists={savedArtists} saved={saved} onToggleSaved={toggleSaved}/>}
+          {tab === "discover" && (selectedArtist ? <ArtistDetails artist={selectedArtist} saved={saved.has(selectedArtist.user_id)} onBack={() => setSelectedArtist(null)} onToggleSaved={() => toggleSaved(selectedArtist.user_id)} onMessage={() => { setMessageContact(toBookingContact(selectedArtist)); setSelectedArtist(null); setTab("contacts"); }}/> : <ArtistGrid title="Discover Artists" artists={artists} saved={saved} onToggleSaved={toggleSaved} onSelect={setSelectedArtist}/>)}
+          {tab === "saved" && (selectedArtist ? <ArtistDetails artist={selectedArtist} saved={saved.has(selectedArtist.user_id)} onBack={() => setSelectedArtist(null)} onToggleSaved={() => toggleSaved(selectedArtist.user_id)} onMessage={() => { setMessageContact(toBookingContact(selectedArtist)); setSelectedArtist(null); setTab("contacts"); }}/> : <ArtistGrid title="Saved Artists" artists={savedArtists} saved={saved} onToggleSaved={toggleSaved} onSelect={setSelectedArtist}/>)}
           {tab === "post" && <OpportunityComposer profile={profile} opportunities={opportunities} onCreated={async () => { setOpportunities(await loadBookerOpportunities(account.id)); setNotice("Opportunity saved to your account."); }}/>}
-          {tab === "contacts" && <EmptyState icon={<Mail/>} title="Messages / Contacts" copy="Artist contact requests will appear here. Private artist details stay hidden until the artist shares them."/>}
+          {tab === "contacts" && <BookingMessages currentUserId={account.id} contactRole="artist" initialContact={messageContact}/>}
         </>}
       </>}
     </div>
-    <nav className="gg-role-nav" aria-label="Booker navigation">{NAV.map(([id,label,Icon]) => <button key={id} type="button" className={tab===id?"active":""} onClick={() => { if (!profileComplete && id !== "profile") { setNotice("Complete your organization / venue profile first."); setTab("profile"); return; } setTab(id); }}><Icon size={18}/><span>{label}</span></button>)}</nav>
+    <nav className="gg-role-nav" aria-label="Booker navigation">{NAV.map(([id,label,Icon]) => <button key={id} type="button" className={tab===id?"active":""} onClick={() => { if (!profileComplete && id !== "profile") { setNotice("Complete your organization / venue profile first."); setTab("profile"); return; } setSelectedArtist(null); if (id !== "contacts") setMessageContact(null); setTab(id); }}><Icon size={18}/><span>{label}</span></button>)}</nav>
   </div>;
 }
 
-function ArtistGrid({ title, artists, saved, onToggleSaved }: { title: string; artists: PublicArtist[]; saved: Set<string>; onToggleSaved: (id: string) => void }) {
+function ArtistGrid({ title, artists, saved, onToggleSaved, onSelect }: { title: string; artists: PublicArtist[]; saved: Set<string>; onToggleSaved: (id: string) => void; onSelect: (artist: PublicArtist) => void }) {
   return <section><div className="gg-role-title"><span className="gg-kicker">Public artist profiles</span><h2>{title}</h2><p>{artists.length ? `${artists.length} artists ready to be discovered.` : "No public artist profiles yet. New artists will appear here after publishing their profile."}</p></div><div className="gg-artist-directory">{artists.map((artist) => <article key={artist.user_id}>
     <div className="gg-artist-image"><SafeImage src={artist.cover_photo_url || artist.profile_photo_url} alt={artist.artist_name}/></div>
     <div className="gg-artist-copy"><span>{artist.artist_type || "Artist"} · {[artist.city,artist.region].filter(Boolean).join(", ") || "Location not added"}</span><h3>{artist.artist_name}</h3><p>{artist.bio || "This artist is preparing their public booking profile."}</p><small>{artist.genres.join(" · ") || "Genres coming soon"}</small></div>
-    <button type="button" className={saved.has(artist.user_id)?"saved":""} onClick={() => onToggleSaved(artist.user_id)}><Bookmark size={15} fill={saved.has(artist.user_id)?"currentColor":"none"}/>{saved.has(artist.user_id)?"Saved":"Save artist"}</button>
+    <div className="gg-artist-actions"><button type="button" className="primary" onClick={() => onSelect(artist)}>View profile</button><button type="button" className={saved.has(artist.user_id)?"saved":""} onClick={() => onToggleSaved(artist.user_id)}><Bookmark size={15} fill={saved.has(artist.user_id)?"currentColor":"none"}/>{saved.has(artist.user_id)?"Saved":"Save"}</button></div>
   </article>)}</div></section>;
+}
+
+function ArtistDetails({ artist, saved, onBack, onToggleSaved, onMessage }: { artist: PublicArtist; saved: boolean; onBack: () => void; onToggleSaved: () => void; onMessage: () => void }) {
+  const photos = [artist.cover_photo_url, artist.profile_photo_url, ...(artist.gallery_photo_urls || [])].filter((photo, index, all): photo is string => Boolean(photo) && all.indexOf(photo) === index);
+  const links = [["Website", artist.website], ["Spotify", artist.spotify_url], ["YouTube", artist.youtube_url], ["Instagram", artist.instagram_url]].filter((item): item is string[] => Boolean(item[1]));
+  return <section className="gg-booker-artist-detail">
+    <button className="gg-back-button" type="button" onClick={onBack}><ArrowLeft size={16}/> Back to artists</button>
+    <div className="gg-booker-detail-hero"><SafeImage src={artist.cover_photo_url || artist.profile_photo_url} alt={artist.artist_name}/><div><span className="gg-kicker">Public booking profile</span><h2>{artist.artist_name}</h2><p>{artist.artist_type || "Artist"} · {[artist.city, artist.region].filter(Boolean).join(", ") || "Location not added"}</p><div><button type="button" className="primary" onClick={onMessage}><MessageCircle size={16}/> Message about booking</button><button type="button" onClick={onToggleSaved}><Bookmark size={16} fill={saved ? "currentColor" : "none"}/>{saved ? "Saved" : "Save artist"}</button></div></div></div>
+    <div className="gg-booker-detail-grid"><div className="gg-booker-detail-main"><span className="gg-kicker">About the artist</span><h3>{artist.bio || "This artist is preparing their public booking profile."}</h3>{photos.length > 0 && <div className="gg-booker-photo-grid">{photos.map((photo) => <SafeImage key={photo} src={photo} alt={`${artist.artist_name} promotional`}/>)}</div>}</div><aside><h3>Booking information</h3><dl><div><dt>Genres</dt><dd>{artist.genres.join(", ") || "Not added"}</dd></div><div><dt>Performer count</dt><dd>{artist.performer_count || "Not added"}</dd></div><div><dt>Collaboration interests</dt><dd>{artist.collaboration_interests.join(", ") || "Not added"}</dd></div><div><dt>Availability</dt><dd>{artist.availability_public ? artist.next_available_dates.join(", ") || "Contact artist for dates" : "Ask artist directly"}</dd></div></dl>{links.length > 0 && <div className="gg-public-links">{links.map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}<ExternalLink size={12}/></a>)}</div>}<button type="button" className="gg-book-now" onClick={onMessage}><Mail size={15}/> Ask to book this artist</button></aside></div>
+  </section>;
+}
+
+function toBookingContact(artist: PublicArtist): BookingContact {
+  return { user_id: artist.user_id, role: "artist", name: artist.artist_name, subtitle: [artist.artist_type, artist.city, artist.region].filter(Boolean).join(" · "), description: artist.bio, image_url: artist.profile_photo_url || artist.cover_photo_url };
 }
 
 function OpportunityComposer({ profile, opportunities, onCreated }: { profile: BookerProfile; opportunities: PostedOpportunity[]; onCreated: () => Promise<void> }) {

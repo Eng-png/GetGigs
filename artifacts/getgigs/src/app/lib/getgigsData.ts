@@ -65,6 +65,15 @@ export type ArtistMessage = {
   created_at: string;
 };
 
+export type BookingContact = {
+  user_id: string;
+  role: "artist" | "booker";
+  name: string;
+  subtitle: string;
+  description: string;
+  image_url: string;
+};
+
 export type PostedOpportunity = {
   id: string;
   owner_id: string;
@@ -384,6 +393,12 @@ export async function sendArtistMessage(recipientId: string, body: string): Prom
   });
   if (error) throw error;
   return data as ArtistMessage;
+}
+
+export async function loadBookingContacts(): Promise<BookingContact[]> {
+  const { data, error } = await requireSupabase().rpc("list_booking_contacts");
+  if (error) throw error;
+  return (data || []) as BookingContact[];
 }
 
 export async function setArtistSaved(userId: string, artistUserId: string, saved: boolean) {

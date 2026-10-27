@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Compass, LogOut, Settings, UserRound, UsersRound } from "lucide-react";
+import { Bookmark, Building2, Compass, LogOut, Settings, UserRound, UsersRound } from "lucide-react";
 import Version1Screen from "./components/v1/Version1Screen";
 import Version2Screen from "./components/v2/Version2Screen";
 import CommunityScreen from "./components/community/CommunityScreen";
@@ -9,13 +9,14 @@ import WelcomeScreen from "./components/auth/WelcomeScreen";
 import AuthModal, { type AuthMode } from "./components/auth/AuthModal";
 import BookerDashboard from "./components/booker/BookerDashboard";
 import AdminDashboard from "./components/admin/AdminDashboard";
+import BookingMessages from "./components/messages/BookingMessages";
 import { useAuth } from "./context/AuthContext";
 import type { AppRole } from "./lib/authTypes";
 import { EMPTY_PROFILE, type BookingProfile } from "./data/bookingProfile";
 import { OPPORTUNITIES, type Opportunity } from "./data/opportunities";
 import { loadArtistProfile, loadPublishedVenues, loadSavedVenueIds, loadSiteContent, recordSearch, saveArtistProfile, setVenueSaved, syncRealVenues, uploadPrivateDocument } from "./lib/getgigsData";
 
-type Section = "explore" | "saved" | "profile" | "community";
+type Section = "explore" | "saved" | "profile" | "community" | "bookers";
 type VisitorMode = "guest";
 type ScreenAccessMode = "guest" | "authenticated" | "demo";
 type AuthDialog = { mode: AuthMode; role?: Exclude<AppRole, "admin">; locked: boolean; adminLogin?: boolean };
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { id: "saved" as const, label: "Saved", icon: Bookmark },
   { id: "profile" as const, label: "Profile", icon: UserRound },
   { id: "community" as const, label: "Community", icon: UsersRound },
+  { id: "bookers" as const, label: "Bookers", icon: Building2 },
 ];
 
 export default function App() {
@@ -135,10 +137,11 @@ export default function App() {
       {section === "saved" && <Version2Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity} onApply={startApplication} onExplore={() => setSection("explore")}/>}
       {section === "profile" && <ArtistBookingProfileScreen profile={currentProfile} availabilityUserId={session?.user.id} onChange={updateBookingProfile} onUploadDocument={session?(file,label)=>uploadPrivateDocument(session.user.id,file,label):undefined}/>}
       {section === "community" && <CommunityScreen currentUserId={session?.user.id} onRequireAuth={requireAuth}/>}
+      {section === "bookers" && session && <BookingMessages currentUserId={session.user.id} contactRole="booker"/>}
     </>}</div>
     {dataNotice && <button className="gg-data-notice" onClick={()=>setDataNotice("")}>{dataNotice}</button>}
     {!applying && session && account ? <AccountMenu accountName={account.display_name||account.email} role="Artist" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>{setSection("profile");setAccountMenu(false)}} onSettings={()=>{setSection("profile");setAccountMenu(false)}} onLogOut={()=>void logOut()}/> : !applying && <button type="button" className="gg-session-chip" onClick={() => void logOut()} title="Return to welcome"><span>Guest</span><LogOut size={12}/></button>}
-    {!applying && <nav className="yondr-product-nav" aria-label="Main navigation" data-no-edit>{NAV_ITEMS.map(({ id,label,icon:Icon }) => { const active=section===id; return <button type="button" key={id} className={active?"active":""} aria-current={active?"page":undefined} onClick={()=>navigate(id)}><Icon size={18} strokeWidth={active?2.2:1.5}/><span>{label}</span></button>; })}</nav>}
+    {!applying && <nav className={`yondr-product-nav${session ? " five-items" : ""}`} aria-label="Main navigation" data-no-edit>{NAV_ITEMS.filter(({id}) => id !== "bookers" || Boolean(session)).map(({ id,label,icon:Icon }) => { const active=section===id; return <button type="button" key={id} className={active?"active":""} aria-current={active?"page":undefined} onClick={()=>navigate(id)}><Icon size={18} strokeWidth={active?2.2:1.5}/><span>{label}</span></button>; })}</nav>}
     {auth && <AuthModal {...auth} signupRole={auth.role} onClose={()=>setAuth(null)} onSwitch={(mode,role)=>setAuth({...auth,mode,role})} onAuthenticated={()=>{setAuth(null);setVisitorMode(null);window.localStorage.removeItem("getgigs-visitor-mode-v1");}}/>}
   </section></main>;
 }
