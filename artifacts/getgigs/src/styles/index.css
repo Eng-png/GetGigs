@@ -483,10 +483,20 @@ button, input, textarea, select { max-width: 100%; }
 }
 
 @media (min-width: 900px) {
+  .yondr-product-shell {
+    padding: 0;
+  }
   .yondr-product-view {
-    max-width: 1400px;
+    max-width: none;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
   }
   .gg-welcome {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    border-radius: 0;
     grid-template-columns: minmax(360px, .72fr) minmax(0, 1.28fr);
   }
   .gg-admin-page,
