@@ -182,6 +182,26 @@ export async function saveSiteContent(contentKey: string, contentValue: string, 
   await logActivity(userId, "content_updated", { contentKey });
 }
 
+export async function saveAllSiteContent(content: Record<string, string>, userId: string) {
+  const updatedAt = new Date().toISOString();
+  const rows = Object.entries(content).map(([contentKey, contentValue]) => ({
+    content_key: contentKey,
+    content_value: contentValue,
+    updated_by: userId,
+    updated_at: updatedAt,
+  }));
+  if (rows.length === 0) return;
+
+  const { error } = await requireSupabase().from("site_content").upsert(rows, { onConflict: "content_key" });
+  if (error) throw error;
+
+  try {
+    await logActivity(userId, "content_updated", { contentKeys: rows.map((row) => row.content_key) });
+  } catch (error) {
+    console.warn("Site content saved, but activity logging failed.", error);
+  }
+}
+
 export async function loadAdminActivity(limit = 100): Promise<AdminActivity[]> {
   const { data, error } = await requireSupabase().from("admin_activity").select("*").order("created_at", { ascending: false }).limit(limit);
   if (error) throw error;

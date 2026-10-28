@@ -412,8 +412,44 @@ button, input, textarea, select { max-width: 100%; }
   min-height: 110px;
   font-family: Inter, sans-serif;
 }
-.gg-content-editor button {
-  justify-self: start;
+.gg-content-save-all {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  margin-top: 10px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0,0,0,.14);
+}
+.gg-content-save-all button {
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid #174f2a;
+  border-radius: 999px;
+  background: #2f9e55;
+  color: #fff;
+  font: 700 11px/1 Inter, sans-serif;
+  cursor: pointer;
+}
+.gg-content-save-all button:hover:not(:disabled) {
+  background: #278748;
+}
+.gg-content-save-all button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+.gg-content-save-all p {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 10px;
+}
+.gg-content-save-all p.success {
+  background: #dff3e5;
+  color: #174f2a;
+}
+.gg-content-save-all p.error {
+  background: #f7deda;
+  color: #7c211c;
 }
 .gg-user-actions {
   display: flex !important;

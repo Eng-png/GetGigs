@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, Building2, LayoutDashboard, Music2, Pencil, ShieldCheck, TicketCheck, Trash2, Users } from "lucide-react";
 import type { Opportunity } from "../../data/opportunities";
 import type { UserProfile } from "../../lib/authTypes";
-import { loadAdminActivity, loadAdminArtistRows, loadAdminBookerRows, loadAdminUsers, loadSiteContent, saveSiteContent, setAccountStatus, updateAdminUser, deleteAdminUser, type AdminActivity } from "../../lib/getgigsData";
+import { loadAdminActivity, loadAdminArtistRows, loadAdminBookerRows, loadAdminUsers, loadSiteContent, saveAllSiteContent, saveSiteContent, setAccountStatus, updateAdminUser, deleteAdminUser, type AdminActivity } from "../../lib/getgigsData";
 import ManageVenuesScreen from "./ManageVenuesScreen";
 import AdminArtistEditor from "./AdminArtistEditor";
 
@@ -48,9 +48,10 @@ function ArtistOverview({ rows, onEdit }: { rows: Record<string,unknown>[]; onEd
 }
 function ContentEditor({ content, actorId, onSaved }: { content: Record<string,string>; actorId:string; onSaved:()=>Promise<unknown>|void }) {
   const [values,setValues]=useState(content); const [busy,setBusy]=useState(false);
+  const [status,setStatus]=useState<{type:"success"|"error";message:string}|null>(null);
   useEffect(()=>setValues(content),[content]);
-  const save=async(key:string)=>{setBusy(true);try{await saveSiteContent(key,values[key]||"",actorId);await onSaved();}finally{setBusy(false);}};
-  return <section><div className="gg-role-title"><span className="gg-kicker">Live website copy</span><h2>Site Content</h2><p>These values are stored privately and can be updated without changing application logic.</p></div><div className="gg-content-editor">{Object.entries(values).map(([key,value])=><label key={key}><span>{key}</span><textarea value={value} onChange={event=>setValues(current=>({...current,[key]:event.target.value}))}/><button type="button" className="primary" disabled={busy} onClick={()=>void save(key)}>Save text</button></label>)}</div></section>;
+  const saveAll=async()=>{setBusy(true);setStatus(null);try{await saveAllSiteContent(values,actorId);await onSaved();setStatus({type:"success",message:"All changes saved successfully."});}catch(error){setStatus({type:"error",message:error instanceof Error?error.message:"Could not save the changes. Please try again."});}finally{setBusy(false);}};
+  return <section><div className="gg-role-title"><span className="gg-kicker">Live website copy</span><h2>Site Content</h2><p>These values are stored privately and can be updated without changing application logic.</p></div><div className="gg-content-editor">{Object.entries(values).map(([key,value])=><label key={key}><span>{key}</span><textarea value={value} onChange={event=>{setStatus(null);setValues(current=>({...current,[key]:event.target.value}));}}/></label>)}<div className="gg-content-save-all">{status&&<p className={status.type} role="status">{status.message}</p>}<button type="button" disabled={busy} onClick={()=>void saveAll()}>{busy?"Saving all changes…":"Save all changes"}</button></div></div></section>;
 }
 function TypographyEditor({ content, actorId, onSaved }: { content: Record<string,string>; actorId:string; onSaved:()=>Promise<unknown>|void }) {
   const [values,setValues]=useState({ family: content["style.detail.fontFamily"] || "'Google Sans Flex', 'Google Sans', Inter, sans-serif", size: content["style.detail.fontSize"] || "11px", color: content["style.detail.color"] || "#11100e" });
