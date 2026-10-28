@@ -15,6 +15,7 @@ import {
   type BookingContact,
 } from "../../lib/getgigsData";
 import BookingMessages from "../messages/BookingMessages";
+import ImageUploader from "../shared/ImageUploader";
 import SafeImage from "../shared/SafeImage";
 
 type Tab = "discover" | "saved" | "post" | "contacts" | "profile";
@@ -23,7 +24,7 @@ const NAV = [
   ["discover", "Discover Artists", Search],
   ["saved", "Saved Artists", Bookmark],
   ["post", "Post Opportunity", CalendarPlus],
-  ["contacts", "Messages / Contacts", Mail],
+  ["contacts", "Messages", Mail],
   ["profile", "Profile", UserRound],
 ] as const;
 
@@ -71,7 +72,7 @@ export default function BookerDashboard({ account }: { account: UserProfile }) {
     {!loading && !profileComplete && <div className="gg-role-notice" role="status">Complete your organization / venue profile before discovering artists or posting opportunities.</div>}
     <div className="gg-role-content">
       {loading ? <EmptyState icon={<Music2/>} title="Loading artists…" copy="Your private workspace is being restored."/> : <>
-        {tab === "profile" || !profileComplete ? <BookerProfileEditor profile={profile} onChange={setProfile} onSave={async () => { await saveBookerProfile(profile); setNotice("Organization profile saved."); }}/>: <>
+          {tab === "profile" || !profileComplete ? <BookerProfileEditor profile={profile} onChange={setProfile} onSave={async () => { setProfile(await saveBookerProfile(profile)); setNotice("Organization profile saved."); }}/>: <>
           {tab === "discover" && (selectedArtist ? <ArtistDetails artist={selectedArtist} saved={saved.has(selectedArtist.user_id)} onBack={() => setSelectedArtist(null)} onToggleSaved={() => toggleSaved(selectedArtist.user_id)} onMessage={() => { setMessageContact(toBookingContact(selectedArtist)); setSelectedArtist(null); setTab("contacts"); }}/> : <ArtistGrid title="Discover Artists" artists={artists} saved={saved} onToggleSaved={toggleSaved} onSelect={setSelectedArtist}/>)}
           {tab === "saved" && (selectedArtist ? <ArtistDetails artist={selectedArtist} saved={saved.has(selectedArtist.user_id)} onBack={() => setSelectedArtist(null)} onToggleSaved={() => toggleSaved(selectedArtist.user_id)} onMessage={() => { setMessageContact(toBookingContact(selectedArtist)); setSelectedArtist(null); setTab("contacts"); }}/> : <ArtistGrid title="Saved Artists" artists={savedArtists} saved={saved} onToggleSaved={toggleSaved} onSelect={setSelectedArtist}/>)}
           {tab === "post" && <OpportunityComposer profile={profile} opportunities={opportunities} onCreated={async () => { setOpportunities(await loadBookerOpportunities(account.id)); setNotice("Opportunity saved to your account."); }}/>}
@@ -115,7 +116,7 @@ function OpportunityComposer({ profile, opportunities, onCreated }: { profile: B
 function BookerProfileEditor({ profile, onChange, onSave }: { profile: BookerProfile; onChange: (profile: BookerProfile)=>void; onSave:()=>Promise<void> }) {
   const [busy,setBusy]=useState(false);
   const update=(key:keyof BookerProfile,value:string|string[])=>onChange({...profile,[key]:value});
-  return <section><div className="gg-role-title"><span className="gg-kicker">Organization profile</span><h2>Profile</h2><p>This private profile belongs only to your account. Complete the required organization details before using the venue workspace.</p></div><form className="gg-account-form" onSubmit={async(e)=>{e.preventDefault();setBusy(true);try{await onSave();}finally{setBusy(false)}}}><Field label="Organization / Venue name" value={profile.organization_name} required onChange={(v)=>update("organization_name",v)}/><Field label="Contact name" value={profile.contact_name} required onChange={(v)=>update("contact_name",v)}/><Field label="Website" value={profile.website} onChange={(v)=>update("website",v)}/><Field label="Location" value={profile.location} required onChange={(v)=>update("location",v)}/><Field label="Venue type" value={profile.venue_type} required onChange={(v)=>update("venue_type",v)}/><Field label="Capacity" value={profile.capacity} required onChange={(v)=>update("capacity",v)}/><Field label="Genres" value={profile.genres.join(", ")} onChange={(v)=>update("genres",v.split(",").map(x=>x.trim()).filter(Boolean))}/><Field label="Description" wide multiline required value={profile.description} onChange={(v)=>update("description",v)}/><button className="primary" disabled={busy}><Save size={15}/>{busy?"Saving…":"Save profile"}</button></form></section>;
+  return <section><div className="gg-role-title"><span className="gg-kicker">Organization profile</span><h2>Profile</h2><p>Add a profile photo and complete the organization details people should see in booking conversations.</p></div><form className="gg-account-form" onSubmit={async(e)=>{e.preventDefault();setBusy(true);try{await onSave();}finally{setBusy(false)}}}><div style={{gridColumn:"1 / -1",maxWidth:420}}><ImageUploader label="Profile photo" value={profile.logo_url} maxMb={8} recommendation="Square images work best in messages." aspectRatio={1} onChange={(value)=>update("logo_url",value)}/></div><Field label="Organization / Venue name" value={profile.organization_name} required onChange={(v)=>update("organization_name",v)}/><Field label="Contact name" value={profile.contact_name} required onChange={(v)=>update("contact_name",v)}/><Field label="Website" value={profile.website} onChange={(v)=>update("website",v)}/><Field label="Location" value={profile.location} required onChange={(v)=>update("location",v)}/><Field label="Venue type" value={profile.venue_type} required onChange={(v)=>update("venue_type",v)}/><Field label="Capacity" value={profile.capacity} required onChange={(v)=>update("capacity",v)}/><Field label="Genres" value={profile.genres.join(", ")} onChange={(v)=>update("genres",v.split(",").map(x=>x.trim()).filter(Boolean))}/><Field label="Description" wide multiline required value={profile.description} onChange={(v)=>update("description",v)}/><button className="primary" disabled={busy}><Save size={15}/>{busy?"Saving…":"Save profile"}</button></form></section>;
 }
 
 function Field({ label, value, onChange, wide, multiline, required, placeholder, type="text" }: { label:string; value:string; onChange:(value:string)=>void; wide?:boolean; multiline?:boolean; required?:boolean; placeholder?:string; type?:string }) { return <label className={wide?"wide":""}><span>{label}</span>{multiline?<textarea rows={5} value={value} required={required} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)}/>:<input type={type} value={value} required={required} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)}/>}</label>; }

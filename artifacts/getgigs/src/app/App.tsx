@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Building2, Compass, LogOut, Settings, UserRound, UsersRound } from "lucide-react";
+import { Bookmark, Compass, LogOut, Mail, Settings, UserRound, UsersRound } from "lucide-react";
 import Version1Screen from "./components/v1/Version1Screen";
 import Version2Screen from "./components/v2/Version2Screen";
 import CommunityScreen from "./components/community/CommunityScreen";
@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { id: "saved" as const, label: "Saved", icon: Bookmark },
   { id: "profile" as const, label: "Profile", icon: UserRound },
   { id: "community" as const, label: "Community", icon: UsersRound },
-  { id: "bookers" as const, label: "Bookers", icon: Building2 },
+  { id: "bookers" as const, label: "Messages", icon: Mail },
 ];
 
 export default function App() {

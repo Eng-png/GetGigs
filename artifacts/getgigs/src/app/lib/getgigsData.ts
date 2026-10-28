@@ -417,11 +417,13 @@ export async function loadBookerProfile(userId: string): Promise<BookerProfile |
 
 export async function saveBookerProfile(profile: BookerProfile) {
   const client = requireSupabase();
-  const payload = { ...profile, profile_status: profile.organization_name ? "complete" : "draft", updated_at: new Date().toISOString() };
+  const logoUrl = await uploadBookerProfilePhoto(profile.user_id, profile.logo_url);
+  const payload = { ...profile, logo_url: logoUrl, profile_status: profile.organization_name ? "complete" : "draft", updated_at: new Date().toISOString() };
   const { error } = await client.from("booker_profiles").upsert(payload);
   if (error) throw error;
-  const { error: profileError } = await client.from("profiles").update({ display_name: profile.organization_name || profile.contact_name, city: profile.location, updated_at: new Date().toISOString() }).eq("id", profile.user_id);
+  const { error: profileError } = await client.from("profiles").update({ display_name: profile.organization_name || profile.contact_name, profile_photo_url: logoUrl, city: profile.location, updated_at: new Date().toISOString() }).eq("id", profile.user_id);
   if (profileError) throw profileError;
+  return payload as BookerProfile;
 }
 
 export async function loadBookerOpportunities(userId: string): Promise<PostedOpportunity[]> {
@@ -481,4 +483,19 @@ async function uploadEmbeddedProfileMedia(userId: string, profile: BookingProfil
   // Cropped profile media is intentionally kept as a compact data URL. This
   // avoids a broken public-storage URL preventing the saved profile from rendering.
   return { ...profile };
+}
+
+async function uploadBookerProfilePhoto(userId: string, value: string): Promise<string> {
+  if (!value.startsWith("data:image/")) return value;
+  const client = requireSupabase();
+  const response = await fetch(value);
+  const blob = await response.blob();
+  const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+  const path = `${userId}/booker-profile-${Date.now()}.${extension}`;
+  const { error } = await client.storage.from("profile-media").upload(path, blob, {
+    contentType: blob.type || "image/jpeg",
+    upsert: false,
+  });
+  if (error) throw error;
+  return client.storage.from("profile-media").getPublicUrl(path).data.publicUrl;
 }

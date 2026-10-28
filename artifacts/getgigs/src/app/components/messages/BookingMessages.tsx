@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Mail, Send } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import {
   loadArtistConversations,
   loadArtistMessages,
@@ -34,14 +34,24 @@ export default function BookingMessages({
   const [sending, setSending] = useState(false);
 
   const visibleContacts = useMemo(() => {
-    const filtered = contacts.filter((contact) => contact.role === contactRole);
+    const conversationUserIds = new Set(
+      conversations.map((item) =>
+        item.participant_a === currentUserId
+          ? item.participant_b
+          : item.participant_a,
+      ),
+    );
+    const filtered = contacts.filter(
+      (contact) =>
+        contact.role === contactRole && conversationUserIds.has(contact.user_id),
+    );
     if (
       selected &&
       !filtered.some((contact) => contact.user_id === selected.user_id)
     )
       return [selected, ...filtered];
     return filtered;
-  }, [contacts, contactRole, selected]);
+  }, [contacts, contactRole, conversations, currentUserId, selected]);
 
   const conversation = useMemo(
     () =>
@@ -132,11 +142,11 @@ export default function BookingMessages({
     <section className="gg-booking-messages">
       <div className="gg-role-title">
         <span className="gg-kicker">Direct booking conversations</span>
-        <h2>{contactRole === "artist" ? "Artist Messages" : "Bookers"}</h2>
+        <h2>Messages</h2>
         <p>
           {contactRole === "artist"
-            ? "Open an artist profile, ask about a date, and keep the booking conversation here."
-            : "Connect with venues, promoters, and organizers looking for artists."}
+            ? "Your artist booking conversations appear here after the first message is sent."
+            : "Your conversations with venues, promoters, and organizers appear here after the first message is sent."}
         </p>
       </div>
       {notice && (
@@ -150,15 +160,16 @@ export default function BookingMessages({
           aria-label={`${contactRole} contacts`}
         >
           {loading ? (
-            <p>Loading contacts…</p>
+            <p>Loading messages…</p>
           ) : visibleContacts.length === 0 ? (
             <div className="gg-contact-empty">
-              <Building2 size={24} />
-              <strong>
-                No {contactRole === "artist" ? "artists" : "bookers"} available
-                yet
-              </strong>
-              <span>Completed public profiles will appear here.</span>
+              <Mail size={24} />
+              <strong>No messages yet</strong>
+              <span>
+                {contactRole === "artist"
+                  ? "Message an artist from their profile, or wait for a new conversation."
+                  : "A person or venue will appear here after a message starts the conversation."}
+              </span>
             </div>
           ) : (
             visibleContacts.map((contact) => (
@@ -186,8 +197,8 @@ export default function BookingMessages({
           {!selected ? (
             <div className="gg-thread-empty">
               <Mail size={30} />
-              <h3>Choose a contact</h3>
-              <p>Select someone on the left to start a booking conversation.</p>
+              <h3>No conversation selected</h3>
+              <p>Choose an existing message on the left to continue the conversation.</p>
             </div>
           ) : (
             <>
