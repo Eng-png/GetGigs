@@ -470,6 +470,87 @@ button, input, textarea, select { max-width: 100%; }
   cursor: wait;
   opacity: .65;
 }
+.gg-cover-photo-button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: #11100e;
+  cursor: zoom-in;
+}
+.gg-cover-photo-button img,
+.gg-cover-photo-button > div {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gg-gallery-grid > button {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #eee;
+  cursor: zoom-in;
+}
+.gg-gallery-grid > button:focus-visible,
+.gg-cover-photo-button:focus-visible {
+  outline: 3px solid #e6e83c;
+  outline-offset: 3px;
+}
+.gg-gallery-grid > button img,
+.gg-gallery-grid > button > div {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gg-photo-lightbox {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(18px, 5vw, 70px);
+  background: rgba(8,8,8,.94);
+}
+.gg-photo-lightbox > img,
+.gg-photo-lightbox > div[role="img"] {
+  max-width: 100%;
+  max-height: calc(100dvh - 100px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+.gg-photo-lightbox button {
+  position: absolute;
+  z-index: 1;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(20,20,20,.7);
+  color: #fff;
+  cursor: pointer;
+}
+.gg-photo-lightbox-close { top: 18px; right: 18px; }
+.gg-photo-lightbox-previous { left: 18px; top: 50%; transform: translateY(-50%); }
+.gg-photo-lightbox-next { right: 18px; top: 50%; transform: translateY(-50%); }
+.gg-photo-lightbox-count {
+  position: absolute;
+  bottom: 18px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(20,20,20,.7);
+  color: #fff;
+  font-size: 10px;
+}
 .gg-user-actions {
   display: flex !important;
   flex-wrap: wrap;

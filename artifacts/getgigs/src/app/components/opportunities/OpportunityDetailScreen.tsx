@@ -1,4 +1,6 @@
-import { Bookmark, ExternalLink, Lock, Mail, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Bookmark, ChevronLeft, ChevronRight, ExternalLink, Lock, Mail, Share2, X } from "lucide-react";
 import type { Opportunity } from "../../data/opportunities";
 import SafeImage from "../shared/SafeImage";
 
@@ -12,6 +14,9 @@ export default function OpportunityDetailScreen({ opportunity, saved, accessMode
   const info = opportunity.publicInfo;
   const booking = opportunity.bookingInfo;
   const requirements = opportunity.requirements;
+  const photos = [...new Set([info.coverImage, ...info.gallery].filter(Boolean))];
+  const [photoIndex, setPhotoIndex] = useState<number | null>(null);
+  const openPhoto = (src: string) => setPhotoIndex(Math.max(0, photos.indexOf(src)));
 
   const share = async () => {
     const text = `${opportunity.venueName} — ${opportunity.opportunityTitle}, ${opportunity.date}`;
@@ -21,8 +26,8 @@ export default function OpportunityDetailScreen({ opportunity, saved, accessMode
   return (
     <div className="gg-venue-detail" data-no-edit style={{ width: "100%", height: "100%", overflowY: "auto", paddingBottom: 116, background: PAPER, color: "#11100e", fontFamily: FONT }}>
       <div style={{ position: "relative", minHeight: "min(62vh, 520px)" }}>
-        <SafeImage src={info.coverImage} alt={opportunity.venueName} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}/>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.04) 45%, rgba(0,0,0,.82))" }} />
+        <button type="button" className="gg-cover-photo-button" aria-label={`View full photo of ${opportunity.venueName}`} onClick={() => openPhoto(info.coverImage)}><SafeImage src={info.coverImage} alt={opportunity.venueName}/></button>
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.04) 45%, rgba(0,0,0,.82))" }} />
         <button type="button" onClick={onBack} style={backButton}>← Back</button>
         <div style={{ position: "absolute", left: 20, right: 20, bottom: 26, color: "#fff" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}><span style={tag}>{opportunity.matchScore}% Match</span>{opportunity.dataQuality.isDemo && <span style={{ ...tag, background: "rgba(255,255,255,.88)" }}>Sample data</span>}</div>
@@ -50,7 +55,7 @@ export default function OpportunityDetailScreen({ opportunity, saved, accessMode
           <button type="button" aria-label="Share venue" onClick={share}><Share2 size={14}/></button>
         </div>
 
-        {info.gallery.length > 0 && <section className="gg-detail-section"><span style={eyebrow}>Venue gallery</span><div className="gg-gallery-grid">{info.gallery.map((src, index) => <SafeImage key={`${src}-${index}`} src={src} alt={`${info.venueName} gallery ${index + 1}`} />)}</div></section>}
+        {info.gallery.length > 0 && <section className="gg-detail-section"><span style={eyebrow}>Venue gallery</span><div className="gg-gallery-grid">{info.gallery.map((src, index) => <button type="button" key={`${src}-${index}`} aria-label={`View ${info.venueName} gallery photo ${index + 1} full size`} onClick={() => openPhoto(src)}><SafeImage src={src} alt={`${info.venueName} gallery ${index + 1}`} /></button>)}</div></section>}
 
         <section className="gg-detail-section"><span style={eyebrow}>Why it matches</span><h2 style={sectionTitle}>A room aligned with your sound.</h2><p style={body}>{opportunity.matching.whyItMatches}</p><div className="gg-fact-grid"><Fact label="Venue vibe" value={opportunity.matching.venueVibe}/><Fact label="Typical artists" value={opportunity.matching.typicalArtists}/><Fact label="Emerging artists" value={opportunity.matching.emergingArtistsAccepted ? "Accepted" : "Not currently listed"}/><Fact label="Support slots" value={opportunity.matching.supportSlotsAvailable ? "Available" : "Not currently listed"}/></div></section>
 
@@ -70,8 +75,31 @@ export default function OpportunityDetailScreen({ opportunity, saved, accessMode
 
         <section className="gg-detail-section"><span style={eyebrow}>Notes</span><p style={body}>{canSeePrivate ? booking.internalNotes : "Additional private venue notes are available to authenticated artists."}</p><small>Last verified: {opportunity.dataQuality.lastVerifiedDate} · {opportunity.dataQuality.verificationStatus}</small></section>
       </main>
+      {photoIndex !== null && photos.length > 0 && <PhotoLightbox photos={photos} activeIndex={photoIndex} venueName={info.venueName} onChange={setPhotoIndex} onClose={() => setPhotoIndex(null)}/>}
     </div>
   );
+}
+
+function PhotoLightbox({ photos, activeIndex, venueName, onChange, onClose }: { photos: string[]; activeIndex: number; venueName: string; onChange: (index: number) => void; onClose: () => void }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft") onChange((activeIndex - 1 + photos.length) % photos.length);
+      if (event.key === "ArrowRight") onChange((activeIndex + 1) % photos.length);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", onKeyDown); };
+  }, [activeIndex, onChange, onClose, photos.length]);
+
+  return createPortal(<div className="gg-photo-lightbox" role="dialog" aria-modal="true" aria-label={`${venueName} photo viewer`} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <button type="button" className="gg-photo-lightbox-close" aria-label="Close photo viewer" onClick={onClose} autoFocus><X size={24}/></button>
+    {photos.length > 1 && <button type="button" className="gg-photo-lightbox-previous" aria-label="Previous photo" onClick={() => onChange((activeIndex - 1 + photos.length) % photos.length)}><ChevronLeft size={30}/></button>}
+    <SafeImage src={photos[activeIndex]} alt={`${venueName} full photo ${activeIndex + 1} of ${photos.length}`} />
+    {photos.length > 1 && <button type="button" className="gg-photo-lightbox-next" aria-label="Next photo" onClick={() => onChange((activeIndex + 1) % photos.length)}><ChevronRight size={30}/></button>}
+    <span className="gg-photo-lightbox-count">{activeIndex + 1} / {photos.length}</span>
+  </div>, document.body);
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) { return <div className={`gg-detail-row gg-detail-row-${label.toLowerCase().replaceAll(" ", "-")}`} style={{ minHeight: 48, display: "grid", gridTemplateColumns: "minmax(110px,.7fr) 1.3fr", alignItems: "center", gap: 16, borderBottom: "1px solid rgba(0,0,0,.15)", fontSize: 10 }}><span style={{ color: "rgba(0,0,0,.48)" }}>{label}</span><strong style={{ fontWeight: 500 }}>{value || "Not listed"}</strong></div>; }
