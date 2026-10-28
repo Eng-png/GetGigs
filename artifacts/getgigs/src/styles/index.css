@@ -452,16 +452,11 @@ button, input, textarea, select { max-width: 100%; }
   color: #7c211c;
 }
 .gg-form-submit-sticky {
-  position: sticky;
-  z-index: 20;
-  bottom: 10px;
   align-items: center;
   padding: 12px;
   border: 1px solid rgba(0,0,0,.16);
   border-radius: 16px;
-  background: rgba(253,250,246,.96);
-  box-shadow: 0 10px 35px rgba(0,0,0,.16);
-  backdrop-filter: blur(14px);
+  background: #fdfaf6;
 }
 .gg-form-submit-sticky .gg-field-error {
   flex: 1 0 100%;
