@@ -10,9 +10,10 @@ type Props = {
   recommendation: string;
   onChange: (value: string) => void;
   aspectRatio?: number;
+  outputWidth?: number;
 };
 
-export default function ImageUploader({ label, value, maxMb, minimum, recommendation, onChange, aspectRatio = 1 }: Props) {
+export default function ImageUploader({ label, value, maxMb, minimum, recommendation, onChange, aspectRatio = 1, outputWidth = 900 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [source, setSource] = useState("");
@@ -35,8 +36,8 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
 
   return (
     <div className="gg-upload-card">
-      <div><strong>{label}</strong><p>JPG, JPEG, PNG, or WebP · max {maxMb} MB · any image dimensions<br />{recommendation}</p></div>
-      {value ? <SafeImage src={value} alt={`${label} preview`} style={{ width: "100%", height: 170, objectFit: "cover", borderRadius: 14 }} /> : <button type="button" className="gg-upload-drop" onClick={() => inputRef.current?.click()}><ImagePlus size={24}/><span>Choose an image</span></button>}
+      <div><strong>{label}</strong><p>JPG, JPEG, PNG, or WebP · max {maxMb} MB · {minimum ? `minimum ${minimum.width} × ${minimum.height ?? minimum.width} px` : "any image dimensions"}<br />{recommendation}</p></div>
+      {value ? <SafeImage src={value} alt={`${label} preview`} style={{ width: "100%", aspectRatio, objectFit: "cover", borderRadius: 14 }} /> : <button type="button" className="gg-upload-drop" onClick={() => inputRef.current?.click()}><ImagePlus size={24}/><span>Choose an image</span></button>}
       <input ref={inputRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void accept(event.target.files?.[0])}/>
       {error && <p className="gg-field-error" role="alert">{error}</p>}
       <div className="gg-upload-actions">
@@ -52,7 +53,7 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
         <label>Zoom <input type="range" min="1" max="3" step=".01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label>
         <label>Horizontal <input type="range" min="0" max="100" value={position.x} onChange={(event) => setPosition({ ...position, x: Number(event.target.value) })} /></label>
         <label>Vertical <input type="range" min="0" max="100" value={position.y} onChange={(event) => setPosition({ ...position, y: Number(event.target.value) })} /></label>
-        <div className="gg-upload-actions"><button type="button" onClick={() => setSource("")}>Cancel</button><button type="button" onClick={() => void saveCrop(source, zoom, position, aspectRatio).then(onChange).then(() => setSource(""))}>Use this crop</button></div>
+        <div className="gg-upload-actions"><button type="button" onClick={() => setSource("")}>Cancel</button><button type="button" onClick={() => void saveCrop(source, zoom, position, aspectRatio, outputWidth).then(onChange).then(() => setSource(""))}>Use this crop</button></div>
       </div>}
     </div>
   );
@@ -73,10 +74,9 @@ async function prepareImageSource(file: File, maxMb: number, minimum?: { width: 
   return dataUrl;
 }
 
-async function saveCrop(src: string, zoom: number, position: { x: number; y: number }, aspectRatio: number) {
+async function saveCrop(src: string, zoom: number, position: { x: number; y: number }, aspectRatio: number, outputWidth = 900) {
   const size = await readImageSize(src);
   const image = await loadImage(src);
-  const outputWidth = 900;
   const outputHeight = Math.round(outputWidth / aspectRatio);
   const cropWidth = Math.min(size.width, size.height * aspectRatio) / zoom;
   const cropHeight = cropWidth / aspectRatio;
