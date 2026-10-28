@@ -278,8 +278,18 @@ export async function syncRealVenues(previous: Opportunity[], next: Opportunity[
     const { error } = await client.from("venues").delete().in("id", removed.map((venue) => venue.id));
     if (error) throw error;
   }
-  if (changed.length) {
-    const { error } = await client.from("venues").upsert(changed.map((venue) => ({
+  const durableChanged = await Promise.all(changed.map(async (venue) => {
+    const coverImage = await uploadVenueImage(venue.id, "cover", venue.publicInfo.coverImage);
+    const coverImageOriginal = await uploadVenueImage(venue.id, "cover-original", venue.publicInfo.coverImageOriginal || "");
+    const gallery = await Promise.all(venue.publicInfo.gallery.map((image, index) => uploadVenueImage(venue.id, `gallery-${index + 1}`, image)));
+    return {
+      ...venue,
+      image: coverImage,
+      publicInfo: { ...venue.publicInfo, coverImage, coverImageOriginal, gallery },
+    };
+  }));
+  if (durableChanged.length) {
+    const { error } = await client.from("venues").upsert(durableChanged.map((venue) => ({
       id: venue.id,
       public_data: { ...venue, bookingInfo: emptyBookingInfo() },
       is_demo: venue.dataQuality.isDemo,
@@ -288,9 +298,28 @@ export async function syncRealVenues(previous: Opportunity[], next: Opportunity[
       updated_at: new Date().toISOString(),
     })));
     if (error) throw error;
-    const { error: privateError } = await client.from("venue_private_details").upsert(changed.map((venue) => ({ venue_id: venue.id, booking_info: venue.bookingInfo, updated_at: new Date().toISOString() })));
+    const { error: privateError } = await client.from("venue_private_details").upsert(durableChanged.map((venue) => ({ venue_id: venue.id, booking_info: venue.bookingInfo, updated_at: new Date().toISOString() })));
     if (privateError) throw privateError;
   }
+  const durableById = new Map(durableChanged.map((venue) => [venue.id, venue]));
+  return next.map((venue) => durableById.get(venue.id) || venue);
+}
+
+async function uploadVenueImage(venueId: string, label: string, value: string): Promise<string> {
+  if (!value.startsWith("data:image/")) return value;
+  const client = requireSupabase();
+  const response = await fetch(value);
+  const blob = await response.blob();
+  const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+  const safeVenueId = venueId.replace(/[^a-z0-9_-]/gi, "-");
+  const path = `venues/${safeVenueId}/${label}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+  const { error } = await client.storage.from("profile-media").upload(path, blob, {
+    contentType: blob.type || "image/jpeg",
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (error) throw error;
+  return client.storage.from("profile-media").getPublicUrl(path).data.publicUrl;
 }
 
 function emptyBookingInfo(): Opportunity["bookingInfo"] {

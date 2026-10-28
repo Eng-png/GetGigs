@@ -114,7 +114,8 @@ export default function App() {
     setVenues(next);
     if (account?.role !== "admin") return;
     try {
-      await syncRealVenues(previous, next);
+      const saved = await syncRealVenues(previous, next);
+      setVenues(saved);
       setDataNotice("Venue changes saved successfully.");
     } catch (error) {
       setVenues(previous);

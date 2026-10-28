@@ -112,6 +112,7 @@ async function saveCrop(src: string, zoom: number, position: { x: number; y: num
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
+    if (!src.startsWith("data:") && !src.startsWith("blob:")) image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = reject;
     image.src = src;
@@ -130,6 +131,7 @@ function readAsDataUrl(file: File) {
 function readImageSize(src: string) {
   return new Promise<{ width: number; height: number }>((resolve, reject) => {
     const image = new Image();
+    if (!src.startsWith("data:") && !src.startsWith("blob:")) image.crossOrigin = "anonymous";
     image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
     image.onerror = reject;
     image.src = src;
