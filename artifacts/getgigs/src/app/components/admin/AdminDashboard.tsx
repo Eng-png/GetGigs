@@ -12,7 +12,7 @@ const TABS: Array<[Tab,string,React.ComponentType<{size?:number}>]> = [
   ["dashboard","Dashboard",LayoutDashboard],["users","Users",Users],["artists","Artists",Music2],["bookers","Bookers",Building2],["venues","Venues",TicketCheck],["opportunities","Opportunities",Activity],["reports","Reports",ShieldCheck],["manage","Manage Venues",Building2],["content","Site Content",Pencil],["typography","Typography",Pencil],["activity","Activity",Activity],
 ];
 
-export default function AdminDashboard({ venues, onVenuesChange, actorId }: { venues: Opportunity[]; onVenuesChange:(venues:Opportunity[])=>void; actorId: string }) {
+export default function AdminDashboard({ venues, onVenuesChange, actorId }: { venues: Opportunity[]; onVenuesChange:(venues:Opportunity[])=>Promise<void>; actorId: string }) {
   const [tab,setTab]=useState<Tab>("dashboard");
   const [users,setUsers]=useState<UserProfile[]>([]);
   const [artists,setArtists]=useState<Record<string,unknown>[]>([]);

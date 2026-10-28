@@ -451,6 +451,30 @@ button, input, textarea, select { max-width: 100%; }
   background: #f7deda;
   color: #7c211c;
 }
+.gg-form-submit-sticky {
+  position: sticky;
+  z-index: 20;
+  bottom: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,.16);
+  border-radius: 16px;
+  background: rgba(253,250,246,.96);
+  box-shadow: 0 10px 35px rgba(0,0,0,.16);
+  backdrop-filter: blur(14px);
+}
+.gg-form-submit-sticky .gg-field-error {
+  flex: 1 0 100%;
+  margin: 0;
+}
+.gg-form-submit-sticky .primary {
+  background: #2f9e55;
+  color: #fff;
+}
+.gg-form-submit-sticky button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
 .gg-user-actions {
   display: flex !important;
   flex-wrap: wrap;

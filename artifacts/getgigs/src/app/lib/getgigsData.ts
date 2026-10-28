@@ -269,24 +269,26 @@ export async function loadPublishedVenues(includePrivate = false): Promise<Oppor
 
 export async function syncRealVenues(previous: Opportunity[], next: Opportunity[]) {
   const client = requireSupabase();
-  const priorReal = previous.filter((venue) => !venue.dataQuality.isDemo);
-  const nextReal = next.filter((venue) => !venue.dataQuality.isDemo);
-  const removed = priorReal.filter((venue) => !nextReal.some((candidate) => candidate.id === venue.id));
+  const removed = previous.filter((venue) => !next.some((candidate) => candidate.id === venue.id));
+  const changed = next.filter((venue) => {
+    const prior = previous.find((candidate) => candidate.id === venue.id);
+    return !prior || JSON.stringify(prior) !== JSON.stringify(venue);
+  });
   if (removed.length) {
     const { error } = await client.from("venues").delete().in("id", removed.map((venue) => venue.id));
     if (error) throw error;
   }
-  if (nextReal.length) {
-    const { error } = await client.from("venues").upsert(nextReal.map((venue) => ({
+  if (changed.length) {
+    const { error } = await client.from("venues").upsert(changed.map((venue) => ({
       id: venue.id,
       public_data: { ...venue, bookingInfo: emptyBookingInfo() },
-      is_demo: false,
+      is_demo: venue.dataQuality.isDemo,
       is_verified: venue.dataQuality.verificationStatus === "Verified",
       is_published: true,
       updated_at: new Date().toISOString(),
     })));
     if (error) throw error;
-    const { error: privateError } = await client.from("venue_private_details").upsert(nextReal.map((venue) => ({ venue_id: venue.id, booking_info: venue.bookingInfo, updated_at: new Date().toISOString() })));
+    const { error: privateError } = await client.from("venue_private_details").upsert(changed.map((venue) => ({ venue_id: venue.id, booking_info: venue.bookingInfo, updated_at: new Date().toISOString() })));
     if (privateError) throw privateError;
   }
 }

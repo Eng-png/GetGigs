@@ -53,7 +53,11 @@ export default function App() {
   useEffect(() => {
     window.localStorage.removeItem("getgigs-access-mode-v1");
     if (!configured) return;
-    loadPublishedVenues(account?.role === "artist" || account?.role === "admin").then((real) => setVenues([...OPPORTUNITIES, ...real.filter((venue) => !OPPORTUNITIES.some((sample) => sample.id === venue.id))])).catch(() => undefined);
+    loadPublishedVenues(account?.role === "artist" || account?.role === "admin").then((stored) => {
+      const venuesById = new Map(OPPORTUNITIES.map((venue) => [venue.id, venue]));
+      stored.forEach((venue) => venuesById.set(venue.id, venue));
+      setVenues([...venuesById.values()]);
+    }).catch(() => undefined);
   }, [configured, account?.role]);
 
   useEffect(() => {
@@ -105,10 +109,19 @@ export default function App() {
       throw new Error(message);
     }
   };
-  const updateVenues = (next: Opportunity[]) => {
+  const updateVenues = async (next: Opportunity[]) => {
     const previous = venues;
     setVenues(next);
-    if (account?.role === "admin") void syncRealVenues(previous, next).catch((error) => { setVenues(previous); setDataNotice(error instanceof Error ? error.message : "Could not update venues."); });
+    if (account?.role !== "admin") return;
+    try {
+      await syncRealVenues(previous, next);
+      setDataNotice("Venue changes saved successfully.");
+    } catch (error) {
+      setVenues(previous);
+      const message = error instanceof Error ? error.message : "Could not update venues.";
+      setDataNotice(message);
+      throw new Error(message);
+    }
   };
   const toggleSavedOpportunity = (id: string) => {
     const nextSaved = !savedOpportunityIds.has(id);
