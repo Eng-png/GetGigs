@@ -628,12 +628,21 @@ function FeaturedDeck({
                 <Pill bg="#ddd864">Featured</Pill>
                 <Pill bg="#ddd864">{opportunity.matchScore}% Match</Pill>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4.87 }}>
+              <button
+                type="button"
+                className="gg-view-details"
+                disabled={slot !== "front"}
+                tabIndex={slot === "front" ? 0 : -1}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpen(opportunity);
+                }}
+              >
                 <svg width={8.7} height={8.7} viewBox="0 0 8.27612 7.87106">
-                  <path d={svgPaths.p157b4000} fill="#fff" />
+                  <path d={svgPaths.p157b4000} fill="currentColor" />
                 </svg>
-                <span style={{ fontFamily: FONT_STACK, fontSize: 11, color: "#fff" }}>View details</span>
-              </div>
+                <span>View details</span>
+              </button>
             </div>
             <div
               style={{

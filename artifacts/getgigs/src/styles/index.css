@@ -218,6 +218,36 @@ button, input, textarea, select { max-width: 100%; }
 .gg-match-name:active {
   color: #ddd864 !important;
 }
+
+.gg-view-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 4.87px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.gg-view-details:hover,
+.gg-view-details:focus-visible,
+.gg-view-details:active {
+  color: #ddd864;
+}
+
+.gg-view-details:focus-visible {
+  outline: 2px solid #ddd864;
+  outline-offset: 4px;
+}
+
+.gg-view-details:disabled {
+  pointer-events: none;
+}
 .gg-square-media {
   aspect-ratio: 1 / 1;
   height: auto !important;
