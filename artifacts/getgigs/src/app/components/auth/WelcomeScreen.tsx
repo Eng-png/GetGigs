@@ -10,6 +10,7 @@ type Props = {
 };
 
 export default function WelcomeScreen({ onSignUp, onLogIn, onAdminLogin, onGuest, title = "Find the right stage—or the right sound.", description = "Artists build one booking-ready profile and discover compatible rooms. Venues, promoters, and organizers discover artists ready to play." }: Props) {
+  const isGetGigsSlogan = /^Get Together\.\s*Get Booked\.\s*Get Gigs$/i.test(title.trim());
   const titleParts = title.split(/(Get Gigs)/i);
   return (
     <main className="gg-welcome">
@@ -17,7 +18,7 @@ export default function WelcomeScreen({ onSignUp, onLogIn, onAdminLogin, onGuest
       <section className="gg-welcome-copy">
         <div className="gg-brand-mark"><Sparkles size={15}/> GetGigs</div>
         <p className="gg-kicker">Where independent artists and bookers meet</p>
-        <h1>{titleParts.map((part, index) => /^Get Gigs$/i.test(part) ? <span className="gg-no-break" key={`${part}-${index}`}>{part}</span> : part)}</h1>
+        <h1>{isGetGigsSlogan ? <><span className="gg-welcome-title-line"><span className="gg-no-break">Get Together.</span>{" "}<span className="gg-no-break">Get Booked.</span></span><span className="gg-welcome-title-line"><span className="gg-no-break">Get Gigs</span></span></> : titleParts.map((part, index) => /^Get Gigs$/i.test(part) ? <span className="gg-no-break" key={`${part}-${index}`}>{part}</span> : part)}</h1>
         <p>{description}</p>
         <div className="gg-welcome-actions gg-welcome-auth-actions">
           <button type="button" className="primary" onClick={onSignUp}><UserPlus size={15}/> Create account</button>

@@ -109,6 +109,7 @@ body { overflow: hidden; background: #000; }
 .gg-kicker { margin:24px 0 8px; color:#a77929; font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
 .gg-welcome h1 { max-width:520px; margin:0; font:500 clamp(42px,12vw,72px)/.95 'Besley','Nyght Serif',serif; letter-spacing:-2px; }
 .gg-no-break { white-space: nowrap; }
+.gg-welcome-title-line { display: block; }
 .gg-welcome-copy>p:not(.gg-kicker){max-width:440px;margin:22px 0;color:rgba(0,0,0,.58);font:15px/1.6 'Besley',serif}.gg-welcome-copy small{display:block;margin-top:18px;color:rgba(0,0,0,.45);font-size:10px;line-height:1.5}
 .gg-welcome-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gg-welcome-actions button,.gg-auth-modal button,.gg-detail-actions button,.gg-admin-page button,.gg-venue-form button{min-height:44px;padding:0 15px;border:1px solid rgba(0,0,0,.22);border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fdfaf6;color:#11100e;font:600 10px/1 Inter,sans-serif;cursor:pointer}.gg-welcome-actions .primary,.gg-admin-page button.primary,.gg-venue-form button.primary{background:#e6e83c;border-color:#11100e}.gg-welcome-actions .guest{grid-column:1/-1;background:#11100e;color:#fff}
 .gg-modal-layer{position:fixed;z-index:3000;inset:0;padding:18px;display:grid;place-items:center;background:rgba(0,0,0,.62);backdrop-filter:blur(7px)}.gg-auth-modal{position:relative;width:min(100%,430px);box-sizing:border-box;padding:30px;border-radius:24px;background:#fdfaf6;color:#11100e;box-shadow:0 25px 90px rgba(0,0,0,.35);font-family:Inter,sans-serif}.gg-auth-modal h2{margin:8px 0 12px;font:500 31px/1.02 'Besley',serif}.gg-auth-modal>p:not(.gg-kicker){color:rgba(0,0,0,.58);font:13px/1.55 'Besley',serif}.gg-auth-modal label{display:grid;gap:6px;margin-top:14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px}.gg-auth-modal input{min-height:44px;padding:0 13px;border:1px solid rgba(0,0,0,.18);border-radius:11px;background:#f3ede3}.gg-auth-modal .gg-auth-primary{width:100%;margin-top:18px;background:#e6e83c;border-color:#11100e}.gg-auth-modal .gg-auth-secondary,.gg-auth-modal .gg-auth-later{width:100%;margin-top:8px;border:0;background:transparent}.gg-modal-close{position:absolute!important;right:14px;top:14px;width:38px!important;min-height:38px!important;padding:0!important}
@@ -784,13 +785,13 @@ button, input, textarea, select { max-width: 100%; }
     min-height: 100%;
   }
   .gg-welcome-copy {
-    width: min(100%, 860px);
+    width: min(100%, 1200px);
     padding: clamp(32px, 5vw, 72px);
     align-self: center;
   }
   .gg-welcome h1 {
     max-width: none;
-    font-size: clamp(48px, 5.5vw, 78px);
+    font-size: clamp(48px, 4vw, 78px);
   }
   .gg-welcome-actions {
     gap: 10px;
@@ -817,6 +818,10 @@ button, input, textarea, select { max-width: 100%; }
   .gg-profile-upload-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 1200px) {
+  .gg-welcome-title-line { white-space: nowrap; }
 }
 
 @media (min-width: 900px) {
