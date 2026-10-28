@@ -36,7 +36,8 @@ export default function App() {
   const [auth, setAuth] = useState<AuthDialog | null>(() => requestedRoleFromPath() ? { mode: "login", locked: true, adminLogin: requestedRoleFromPath() === "admin" } : null);
   const [applying, setApplying] = useState<Opportunity | null>(null);
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(() => demoSavedVenueIdsFromStorage());
-  const [venues, setVenues] = useState<Opportunity[]>(OPPORTUNITIES);
+  const [venues, setVenues] = useState<Opportunity[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState(true);
   const [bookingProfile, setBookingProfile] = useState<BookingProfile>(EMPTY_PROFILE);
   const [guestProfile, setGuestProfile] = useState<BookingProfile>(EMPTY_PROFILE);
   const [accountMenu, setAccountMenu] = useState(false);
@@ -52,12 +53,23 @@ export default function App() {
 
   useEffect(() => {
     window.localStorage.removeItem("getgigs-access-mode-v1");
-    if (!configured) return;
+    if (!configured) {
+      setVenues(OPPORTUNITIES);
+      setVenuesLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setVenuesLoading(true);
     loadPublishedVenues(account?.role === "artist" || account?.role === "admin").then((stored) => {
       const venuesById = new Map(OPPORTUNITIES.map((venue) => [venue.id, venue]));
       stored.forEach((venue) => venuesById.set(venue.id, venue));
-      setVenues([...venuesById.values()]);
-    }).catch(() => undefined);
+      if (!cancelled) setVenues([...venuesById.values()]);
+    }).catch(() => {
+      if (!cancelled) setVenues(OPPORTUNITIES);
+    }).finally(() => {
+      if (!cancelled) setVenuesLoading(false);
+    });
+    return () => { cancelled = true; };
   }, [configured, account?.role]);
 
   useEffect(() => {
@@ -140,6 +152,8 @@ export default function App() {
   if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", appPath(account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin")); window.location.reload(); }}/>;
 
   if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen title={siteContent["welcome.title"]} description={siteContent["welcome.description"]} onSignUp={() => setAuth({ mode:"signup", role:"artist", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={enterVisitor}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => requestedRole ? undefined : setAuth(null)} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
+
+  if (venuesLoading && account?.role !== "booker") return <div className="gg-auth-loading"><span>GetGigs</span><p>Loading your saved venue photos…</p></div>;
 
   if (account?.role === "admin") return <main className="yondr-product-shell"><section className="yondr-product-view"><AdminDashboard actorId={session?.user.id || ""} venues={venues} onVenuesChange={updateVenues}/><AccountMenu accountName={account.display_name||account.email} role="Admin" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;
   if (account?.role === "booker") return <main className="yondr-product-shell"><section className="yondr-product-view"><BookerDashboard account={account}/><AccountMenu accountName={account.display_name||account.email} role="Looking for Artist" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>setAccountMenu(false)} onSettings={()=>setAccountMenu(false)} onLogOut={()=>void logOut()}/></section></main>;
