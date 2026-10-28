@@ -1,5 +1,6 @@
 import type { BookingProfile } from "../data/bookingProfile";
 import { EMPTY_PROFILE } from "../data/bookingProfile";
+import { normalizeOpportunity } from "../data/opportunities";
 import type { Opportunity } from "../data/opportunities";
 import type { BookerProfile, UserProfile } from "./authTypes";
 import { requireSupabase } from "./supabase";
@@ -259,12 +260,31 @@ export async function loadPublishedVenues(includePrivate = false): Promise<Oppor
   const client = requireSupabase();
   const { data, error } = await client.from("venues").select("id, public_data").eq("is_published", true).order("updated_at", { ascending: false });
   if (error) throw error;
-  const venues = (data || []).map((row) => row.public_data as unknown as Opportunity);
+  const venues = (data || []).map((row) => normalizeOpportunity(normalizeStoredVenue(row.public_data as unknown as Opportunity)));
   if (!includePrivate || !venues.length) return venues;
   const { data: privateRows, error: privateError } = await client.from("venue_private_details").select("venue_id, booking_info").in("venue_id", venues.map((venue) => venue.id));
   if (privateError) throw privateError;
   const privateById = new Map((privateRows || []).map((row) => [String(row.venue_id), row.booking_info]));
   return venues.map((venue) => ({ ...venue, bookingInfo: (privateById.get(venue.id) as unknown as Opportunity["bookingInfo"]) || emptyBookingInfo() }));
+}
+
+function normalizeStoredVenue(value: Opportunity): Opportunity {
+  const publicInfo = value.publicInfo || ({} as Opportunity["publicInfo"]);
+  const gallery = Array.isArray(publicInfo.gallery) ? publicInfo.gallery.filter((photo): photo is string => typeof photo === "string" && photo.length > 0) : [];
+  const coverImage = publicInfo.coverImage || value.image || "";
+  return {
+    ...value,
+    image: value.image || coverImage,
+    publicInfo: {
+      ...publicInfo,
+      venueName: publicInfo.venueName || value.venueName || "",
+      city: publicInfo.city || value.city || "",
+      state: publicInfo.state || value.state || "",
+      description: publicInfo.description || value.description || "",
+      coverImage,
+      gallery,
+    },
+  };
 }
 
 export async function syncRealVenues(previous: Opportunity[], next: Opportunity[]) {
