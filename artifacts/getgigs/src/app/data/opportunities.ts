@@ -20,6 +20,7 @@ export type VenuePublicInfo = {
   publicPhone: string;
   bookingPage: string;
   coverImage: string;
+  coverImageOriginal?: string;
   gallery: string[];
 };
 
@@ -146,6 +147,7 @@ function createSampleVenue(seed: Seed): Opportunity {
       publicPhone: "",
       bookingPage: seed.submissionLink,
       coverImage: seed.image,
+      coverImageOriginal: seed.image,
       gallery: seed.gallery,
     },
     bookingInfo: {

@@ -11,14 +11,23 @@ type Props = {
   onChange: (value: string) => void;
   aspectRatio?: number;
   outputWidth?: number;
+  cropSource?: string;
+  onCropSourceChange?: (value: string) => void;
 };
 
-export default function ImageUploader({ label, value, maxMb, minimum, recommendation, onChange, aspectRatio = 1, outputWidth = 900 }: Props) {
+export default function ImageUploader({ label, value, maxMb, minimum, recommendation, onChange, aspectRatio = 1, outputWidth = 900, cropSource, onCropSourceChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [source, setSource] = useState("");
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 50, y: 50 });
+
+  const openCropper = (nextSource: string) => {
+    setError("");
+    setSource(nextSource);
+    setZoom(1);
+    setPosition({ x: 50, y: 50 });
+  };
 
   const accept = async (file?: File) => {
     if (!file) return;
@@ -26,11 +35,21 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return setError("Choose a JPG, JPEG, PNG, or WebP image.");
     if (file.size > maxMb * 1024 * 1024) return setError(`Image must be ${maxMb} MB or smaller.`);
     try {
-      setSource(await prepareImageSource(file, maxMb, minimum));
-      setZoom(1);
-      setPosition({ x: 50, y: 50 });
+      openCropper(await prepareImageSource(file, maxMb, minimum));
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not read this image.");
+    }
+  };
+
+  const commitCrop = async () => {
+    try {
+      setError("");
+      const cropped = await saveCrop(source, zoom, position, aspectRatio, outputWidth);
+      onChange(cropped);
+      onCropSourceChange?.(source);
+      setSource("");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not crop this image.");
     }
   };
 
@@ -42,7 +61,8 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
       {error && <p className="gg-field-error" role="alert">{error}</p>}
       <div className="gg-upload-actions">
         <button type="button" onClick={() => inputRef.current?.click()}>{value ? "Replace photo" : "Upload photo"}</button>
-        {value && <button type="button" onClick={() => onChange("")}><Trash2 size={13}/> Remove</button>}
+        {value && <button type="button" onClick={() => openCropper(cropSource || value)}>Crop / reposition</button>}
+        {value && <button type="button" onClick={() => { onChange(""); onCropSourceChange?.(""); }}><Trash2 size={13}/> Remove</button>}
       </div>
       {source && <div className="gg-image-cropper" role="dialog" aria-label={`Adjust ${label}`}>
         <strong>Adjust your image</strong>
@@ -53,7 +73,7 @@ export default function ImageUploader({ label, value, maxMb, minimum, recommenda
         <label>Zoom <input type="range" min="1" max="3" step=".01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label>
         <label>Horizontal <input type="range" min="0" max="100" value={position.x} onChange={(event) => setPosition({ ...position, x: Number(event.target.value) })} /></label>
         <label>Vertical <input type="range" min="0" max="100" value={position.y} onChange={(event) => setPosition({ ...position, y: Number(event.target.value) })} /></label>
-        <div className="gg-upload-actions"><button type="button" onClick={() => setSource("")}>Cancel</button><button type="button" onClick={() => void saveCrop(source, zoom, position, aspectRatio, outputWidth).then(onChange).then(() => setSource(""))}>Use this crop</button></div>
+        <div className="gg-upload-actions"><button type="button" onClick={() => setSource("")}>Cancel</button><button type="button" onClick={() => void commitCrop()}>Use this crop</button></div>
       </div>}
     </div>
   );
