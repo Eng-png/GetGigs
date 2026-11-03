@@ -63,6 +63,7 @@ import deck3 from "../../../imports/deck-3.png";
 import deck4 from "../../../imports/deck-4.png";
 
 import type { Opportunity } from "../../data/opportunities";
+import { visualProps } from "../../lib/visualContent";
 import OpportunityDetailScreen from "../opportunities/OpportunityDetailScreen";
 
 const DECK_IMAGES = [deck1, deck2, deck3, deck4];
@@ -79,7 +80,7 @@ const ACCENT = "#bd8e3c";
 const PIN_SELECTED = "#ddd864";
 const PIN_BORDER = "#857e38";
 
-export default function Version1Screen({ opportunities, artistName, accessMode = "guest", onRequireAuth, onSearch, noScroll = false, onApply, savedOpportunityIds, onToggleSaved }: { opportunities: Opportunity[]; artistName?: string; accessMode?: "guest" | "authenticated" | "demo"; onRequireAuth?: () => void; onSearch?: (query: string, filters: Record<string, unknown>) => void; noScroll?: boolean; onApply: (opportunity: Opportunity) => void; savedOpportunityIds: Set<string>; onToggleSaved: (opportunityId: string) => void }) {
+export default function Version1Screen({ opportunities, artistName, accessMode = "guest", onRequireAuth, onSearch, noScroll = false, onApply, savedOpportunityIds, onToggleSaved, siteContent = {} }: { opportunities: Opportunity[]; artistName?: string; accessMode?: "guest" | "authenticated" | "demo"; onRequireAuth?: () => void; onSearch?: (query: string, filters: Record<string, unknown>) => void; noScroll?: boolean; onApply: (opportunity: Opportunity) => void; savedOpportunityIds: Set<string>; onToggleSaved: (opportunityId: string) => void; siteContent?: Record<string, string> }) {
   const listings = useMemo(() => opportunities.map((opportunity) => ({ ...opportunity, name: opportunity.venueName, match: opportunity.matchScore, coord: opportunity.coordinate })), [opportunities]);
   const [view, setView] = useState<"gallery" | "map">("gallery");
   const [deckIdx, setDeckIdx] = useState(0);
@@ -136,7 +137,7 @@ export default function Version1Screen({ opportunities, artistName, accessMode =
         >
           <StatusBar />
           <TopBar artistName={artistName} />
-          <Header />
+          <Header siteContent={siteContent} />
           <div style={{ height: 18 }} />
           <Rise delay={0.27} duration={0.3}>
             <div style={{ display: "flex", justifyContent: "center" }}>
@@ -254,7 +255,9 @@ function TopBar({ artistName }: { artistName?: string }) {
   );
 }
 
-function Header() {
+function Header({ siteContent }: { siteContent: Record<string, string> }) {
+  const title = visualProps(siteContent, "explore.title");
+  const description = visualProps(siteContent, "explore.description");
   return (
     <div
       style={{
@@ -273,10 +276,10 @@ function Header() {
       }}
     >
       <Rise delay={0.2} duration={0.3}>
-        <p style={{ margin: 0 }}>4 curated opportunities</p>
+        <p style={{ margin: 0, ...title.style }}>{title.text}</p>
       </Rise>
       <Rise delay={0.27} duration={0.3}>
-        <p style={{ margin: 0, opacity: 0.4 }}>Boston + Cambridge · Fall 2026</p>
+        <p style={{ margin: 0, opacity: 0.4, ...description.style }}>{description.text}</p>
       </Rise>
     </div>
   );

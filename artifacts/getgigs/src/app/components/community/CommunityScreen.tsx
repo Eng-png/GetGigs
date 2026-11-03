@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageIcon, MapPin, MessageCircle, Music2, Search, Users } from "lucide-react";
 import type { PublicArtist } from "../../lib/getgigsData";
 import { loadPublicArtists, sendArtistMessage } from "../../lib/getgigsData";
+import { visualProps } from "../../lib/visualContent";
 import SafeImage from "../shared/SafeImage";
 import AvailabilityCalendar from "../availability/AvailabilityCalendar";
 
@@ -12,9 +13,9 @@ const INK = "#11100e";
 const CITRON = "#e6e83c";
 const GOLD = "#bd8e3c";
 
-type Props = { currentUserId?: string; onRequireAuth: () => void };
+type Props = { currentUserId?: string; onRequireAuth: () => void; siteContent?: Record<string, string> };
 
-export default function CommunityScreen({ currentUserId, onRequireAuth }: Props) {
+export default function CommunityScreen({ currentUserId, onRequireAuth, siteContent = {} }: Props) {
   const [artists, setArtists] = useState<PublicArtist[]>([]);
   const [selected, setSelected] = useState<PublicArtist | null>(null);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -61,6 +62,8 @@ export default function CommunityScreen({ currentUserId, onRequireAuth }: Props)
   const sameGenre = useMemo(() => filteredArtists.filter((artist) => viewer && artist.genres.some((item) => viewer.genres.includes(item))).slice(0, 4), [filteredArtists, viewer]);
   const availableWhenYouAre = useMemo(() => filteredArtists.filter((artist) => viewer && artist.availability_public && artist.next_available_dates.some((date) => viewer.next_available_dates.includes(date))).slice(0, 4), [filteredArtists, viewer]);
   const collaborators = useMemo(() => filteredArtists.filter((artist) => artist.collaboration_interests.length > 0).slice(0, 4), [filteredArtists]);
+  const title = visualProps(siteContent, "community.title");
+  const description = visualProps(siteContent, "community.description");
 
   if (messageTarget) {
     return <MessageComposer artist={messageTarget} currentUserId={currentUserId} onRequireAuth={onRequireAuth} onClose={() => setMessageTarget(null)} />;
@@ -85,8 +88,8 @@ export default function CommunityScreen({ currentUserId, onRequireAuth }: Props)
     <div className="community-scroll" style={{ height: "100%", overflowY: "auto", scrollbarWidth: "none", paddingBottom: 112 }}>
       <header style={{ padding: "58px 20px 20px" }}>
         <span style={eyebrow}>Find collaborators and build the next show</span>
-        <h1 style={heading}>Artist Network</h1>
-        <p style={intro}>Discover published artists, find your musical and schedule fit, and message when the vibe feels right.</p>
+        <h1 style={{ ...heading, ...title.style }}>{title.text}</h1>
+        <p style={{ ...intro, ...description.style }}>{description.text}</p>
       </header>
       <section style={{ display: "grid", gap: 9, padding: "0 20px" }}>
         <label style={searchLabel}><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search artists, sounds, roles" aria-label="Search artists" /></label>

@@ -15,7 +15,7 @@ import type { AppRole } from "./lib/authTypes";
 import { EMPTY_PROFILE, type BookingProfile } from "./data/bookingProfile";
 import { OPPORTUNITIES, type Opportunity } from "./data/opportunities";
 import { loadArtistProfile, loadPublishedVenues, loadSavedVenueIds, loadSiteContent, recordSearch, saveArtistProfile, setVenueSaved, syncRealVenues, uploadPrivateDocument } from "./lib/getgigsData";
-import { parseVisualTextStyle, visualTextCss } from "./lib/visualContent";
+import { visualProps } from "./lib/visualContent";
 
 type Section = "explore" | "saved" | "profile" | "community" | "bookers";
 type VisitorMode = "guest";
@@ -152,7 +152,7 @@ export default function App() {
   if (authLoading) return <div className="gg-auth-loading"><span>GetGigs</span><p>Restoring your account…</p></div>;
   if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", appPath(account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin")); window.location.reload(); }}/>;
 
-  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen title={siteContent["welcome.title"]} description={siteContent["welcome.description"]} titleStyle={visualTextCss(parseVisualTextStyle(siteContent,"welcome.title"),"welcome.title")} descriptionStyle={visualTextCss(parseVisualTextStyle(siteContent,"welcome.description"),"welcome.description")} onSignUp={() => setAuth({ mode:"signup", role:"artist", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={enterVisitor}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => { if (requestedRole) window.location.replace(appPath("/")); else setAuth(null); }} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
+  if (!accessMode || (requestedRole && !session)) { const welcomeTitle=visualProps(siteContent,"welcome.title"),welcomeDescription=visualProps(siteContent,"welcome.description");return <><WelcomeScreen title={welcomeTitle.text} description={welcomeDescription.text} titleStyle={welcomeTitle.style} descriptionStyle={welcomeDescription.style} onSignUp={() => setAuth({ mode:"signup", role:"artist", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={enterVisitor}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => { if (requestedRole) window.location.replace(appPath("/")); else setAuth(null); }} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;}
 
   if (venuesLoading && account?.role !== "booker") return <div className="gg-auth-loading"><span>GetGigs</span><p>Loading your saved venue photos…</p></div>;
 
@@ -162,11 +162,13 @@ export default function App() {
   const currentProfile = visitorMode ? guestProfile : bookingProfile;
   return <main className="yondr-product-shell"><section className="yondr-product-view" aria-live="polite">
     <div className="yondr-editable-canvas">{applying ? <GigApplicationScreen opportunity={applying} profile={currentProfile} demo={Boolean(visitorMode)} onClose={() => setApplying(null)} /> : <>
-      {section === "explore" && <Version1Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} onSearch={(query,filters)=>{if(session)void recordSearch(session.user.id,query,filters).catch(()=>undefined)}} onApply={startApplication} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity}/>}
-      {section === "saved" && <Version2Screen opportunities={venues} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity} onApply={startApplication} onExplore={() => setSection("explore")}/>}
+      {section === "explore" && <Version1Screen opportunities={venues} siteContent={siteContent} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} onSearch={(query,filters)=>{if(session)void recordSearch(session.user.id,query,filters).catch(()=>undefined)}} onApply={startApplication} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity}/>}
+      {section === "saved" && <Version2Screen opportunities={venues} siteContent={siteContent} artistName={currentProfile.name} accessMode={accessMode} onRequireAuth={requireAuth} savedOpportunityIds={savedOpportunityIds} onToggleSaved={toggleSavedOpportunity} onApply={startApplication} onExplore={() => setSection("explore")}/>}
       {section === "profile" && <ArtistBookingProfileScreen profile={currentProfile} availabilityUserId={session?.user.id} onChange={updateBookingProfile} onUploadDocument={session?(file,label)=>uploadPrivateDocument(session.user.id,file,label):undefined}/>}
-      {section === "community" && <CommunityScreen currentUserId={session?.user.id} onRequireAuth={requireAuth}/>}
-      {section === "bookers" && session && <BookingMessages currentUserId={session.user.id} contactRole="booker"/>}
+      {section === "community" && (
+        <CommunityScreen siteContent={siteContent} currentUserId={session?.user.id} onRequireAuth={requireAuth} />
+      )}
+      {section === "bookers" && session && <BookingMessages siteContent={siteContent} currentUserId={session.user.id} contactRole="booker"/>}
     </>}</div>
     {dataNotice && <button className="gg-data-notice" onClick={()=>setDataNotice("")}>{dataNotice}</button>}
     {!applying && session && account ? <AccountMenu accountName={account.display_name||account.email} role="Artist" open={accountMenu} onToggle={()=>setAccountMenu(v=>!v)} onProfile={()=>{setSection("profile");setAccountMenu(false)}} onSettings={()=>{setSection("profile");setAccountMenu(false)}} onLogOut={()=>void logOut()}/> : !applying && <button type="button" className="gg-session-chip" onClick={() => void logOut()} title="Return to welcome"><span>Guest</span><LogOut size={12}/></button>}

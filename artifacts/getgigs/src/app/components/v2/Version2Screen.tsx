@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Bookmark, CalendarDays, DollarSign, MapPin, MicVocal, Music2 } from "lucide-react";
 import { motion } from "motion/react";
 import type { Opportunity } from "../../data/opportunities";
+import { visualProps } from "../../lib/visualContent";
 import OpportunityDetailScreen from "../opportunities/OpportunityDetailScreen";
 
 const FONT = "'Google Sans Flex', 'Google Sans', Inter, sans-serif";
@@ -32,6 +33,7 @@ export default function Version2Screen({
   accessMode = "guest",
   onRequireAuth,
   artistName,
+  siteContent = {},
 }: {
   noScroll?: boolean;
   savedOpportunityIds: Set<string>;
@@ -42,6 +44,7 @@ export default function Version2Screen({
   accessMode?: "guest" | "authenticated" | "demo";
   onRequireAuth?: () => void;
   artistName?: string;
+  siteContent?: Record<string, string>;
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selected, setSelected] = useState<Opportunity | null>(null);
@@ -58,7 +61,7 @@ export default function Version2Screen({
       <div className="saved-scroll" style={{ position: "absolute", inset: 0, overflowY: noScroll ? "hidden" : "auto", scrollbarWidth: "none", paddingBottom: 112 }}>
         <StatusBar />
         <TopBar artistName={artistName} />
-        <Header count={saved.length} />
+        <Header count={saved.length} siteContent={siteContent} />
 
         {saved.length > 0 ? (
           <>
@@ -96,14 +99,16 @@ function TopBar({ artistName }: { artistName?: string }) {
   return <div style={{ height: 72, padding: "18px 20px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", boxSizing: "border-box" }}><span style={{ fontSize: 14 }}>←</span><span style={{ fontFamily: SERIF, fontSize: 19 }}>{artistName || "GetGigs"}</span></div>;
 }
 
-function Header({ count }: { count: number }) {
+function Header({ count, siteContent }: { count: number; siteContent: Record<string, string> }) {
+  const title = visualProps(siteContent, "saved.title");
+  const description = visualProps(siteContent, "saved.description");
   return (
     <header style={{ padding: "7px 20px 25px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 27, height: 34, border: "1px solid rgba(0,0,0,.4)", borderRadius: 18, display: "grid", placeItems: "center" }}><Music2 size={13} strokeWidth={1.6}/></div>
         <div>
-          <h1 style={{ margin: 0, fontFamily: FONT, fontSize: 17, fontWeight: 500 }}>Your saved opportunities</h1>
-          <p style={{ margin: "5px 0 0", color: "rgba(0,0,0,.5)", fontSize: 12 }}>Gigs and venues you want to revisit</p>
+          <h1 style={{ margin: 0, fontFamily: FONT, fontSize: 17, fontWeight: 500, ...title.style }}>{title.text}</h1>
+          <p style={{ margin: "5px 0 0", color: "rgba(0,0,0,.5)", fontSize: 12, ...description.style }}>{description.text}</p>
         </div>
       </div>
       <p style={{ margin: "17px 0 0", color: "rgba(0,0,0,.36)", fontSize: 11 }}>{count} saved {count === 1 ? "opportunity" : "opportunities"}</p>

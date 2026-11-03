@@ -9,18 +9,21 @@ import {
   type ArtistMessage,
   type BookingContact,
 } from "../../lib/getgigsData";
+import { visualProps } from "../../lib/visualContent";
 import SafeImage from "../shared/SafeImage";
 
 type Props = {
   currentUserId: string;
   contactRole: "artist" | "booker";
   initialContact?: BookingContact | null;
+  siteContent?: Record<string, string>;
 };
 
 export default function BookingMessages({
   currentUserId,
   contactRole,
   initialContact,
+  siteContent,
 }: Props) {
   const [contacts, setContacts] = useState<BookingContact[]>([]);
   const [conversations, setConversations] = useState<ArtistConversation[]>([]);
@@ -32,6 +35,9 @@ export default function BookingMessages({
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const eyebrow = siteContent ? visualProps(siteContent, "messages.eyebrow") : null;
+  const title = siteContent ? visualProps(siteContent, "messages.title") : null;
+  const description = siteContent ? visualProps(siteContent, "messages.description") : null;
 
   const visibleContacts = useMemo(() => {
     const conversationUserIds = new Set(
@@ -141,12 +147,12 @@ export default function BookingMessages({
   return (
     <section className="gg-booking-messages">
       <div className="gg-role-title">
-        <span className="gg-kicker">Direct booking conversations</span>
-        <h2>Messages</h2>
-        <p>
-          {contactRole === "artist"
+        <span className="gg-kicker" style={eyebrow?.style}>{eyebrow?.text || "Direct booking conversations"}</span>
+        <h2 style={title?.style}>{title?.text || "Messages"}</h2>
+        <p style={description?.style}>
+          {description?.text || (contactRole === "artist"
             ? "Your artist booking conversations appear here after the first message is sent."
-            : "Your conversations with venues, promoters, and organizers appear here after the first message is sent."}
+            : "Your conversations with venues, promoters, and organizers appear here after the first message is sent.")}
         </p>
       </div>
       {notice && (
