@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, Building2, LayoutDashboard, Music2, Pencil, ShieldCheck, TicketCheck, Trash2, Users } from "lucide-react";
 import type { Opportunity } from "../../data/opportunities";
 import type { UserProfile } from "../../lib/authTypes";
-import { loadAdminActivity, loadAdminArtistRows, loadAdminBookerRows, loadAdminUsers, loadSiteContent, saveAllSiteContent, saveSiteContent, setAccountStatus, updateAdminUser, deleteAdminUser, type AdminActivity } from "../../lib/getgigsData";
+import { loadAdminActivity, loadAdminArtistRows, loadAdminBookerRows, loadAdminUsers, loadSiteContent, saveSiteContent, setAccountStatus, updateAdminUser, deleteAdminUser, type AdminActivity } from "../../lib/getgigsData";
 import ManageVenuesScreen from "./ManageVenuesScreen";
 import AdminArtistEditor from "./AdminArtistEditor";
+import VisualContentEditor from "./VisualContentEditor";
 
 type Tab = "dashboard" | "users" | "artists" | "bookers" | "venues" | "opportunities" | "reports" | "manage" | "content" | "typography" | "activity";
 
@@ -37,7 +38,7 @@ export default function AdminDashboard({ venues, onVenuesChange, actorId }: { ve
     {tab==="venues"&&<DataOverview title="Venues" rows={venues.map(v=>({name:v.venueName,location:`${v.city}, ${v.state}`,verification:v.dataQuality.verificationStatus,type:v.publicInfo.venueType,sample:v.dataQuality.isDemo?"Sample / Demo":"Live"}))} primary="name" secondary="location" fields={["type","verification","sample"]}/>}
     {tab==="opportunities"&&<Placeholder title="Opportunities" copy="Booker-created opportunities are stored per account and available for moderation through database-authorized records."/>}
     {tab==="reports"&&<Placeholder title="Reports" copy="User-submitted platform reports will appear here for administrator review."/>}
-    {tab==="content"&&<ContentEditor content={content} actorId={actorId} onSaved={reload}/>}
+    {tab==="content"&&<VisualContentEditor content={content} actorId={actorId} onSaved={reload}/>}
     {tab==="typography"&&<TypographyEditor content={content} actorId={actorId} onSaved={reload}/>}
     {tab==="activity"&&<ActivityOverview rows={activity}/>}
   </div></div>;
@@ -45,13 +46,6 @@ export default function AdminDashboard({ venues, onVenuesChange, actorId }: { ve
 
 function ArtistOverview({ rows, onEdit }: { rows: Record<string,unknown>[]; onEdit: (id:string,name:string)=>void }) {
   return <section><div className="gg-role-title"><span className="gg-kicker">Artist management</span><h2>Artists</h2><p>{rows.length} records · edit full profile JSON including image URLs and booking details.</p></div><div className="gg-admin-records">{rows.map((row,index)=><article key={String(row.id||index)}><div><strong>{String(row.artist_name||"Not added")}</strong><small>{String(row.account_email||"")}</small></div><dl><div><dt>Genres</dt><dd>{String(row.genres||"—")}</dd></div><div><dt>Location</dt><dd>{String(row.city||"—")}</dd></div><div><dt>Status</dt><dd>{String(row.account_status||"—")}</dd></div></dl><button type="button" onClick={()=>onEdit(String(row.id),String(row.artist_name||"Artist"))}><Pencil size={14}/> Edit artist</button></article>)}</div></section>;
-}
-function ContentEditor({ content, actorId, onSaved }: { content: Record<string,string>; actorId:string; onSaved:()=>Promise<unknown>|void }) {
-  const [values,setValues]=useState(content); const [busy,setBusy]=useState(false);
-  const [status,setStatus]=useState<{type:"success"|"error";message:string}|null>(null);
-  useEffect(()=>setValues(content),[content]);
-  const saveAll=async()=>{setBusy(true);setStatus(null);try{await saveAllSiteContent(values,actorId);await onSaved();setStatus({type:"success",message:"All changes saved successfully."});}catch(error){setStatus({type:"error",message:error instanceof Error?error.message:"Could not save the changes. Please try again."});}finally{setBusy(false);}};
-  return <section><div className="gg-role-title"><span className="gg-kicker">Live website copy</span><h2>Site Content</h2><p>These values are stored privately and can be updated without changing application logic.</p></div><div className="gg-content-editor">{Object.entries(values).map(([key,value])=><label key={key}><span>{key}</span><textarea value={value} onChange={event=>{setStatus(null);setValues(current=>({...current,[key]:event.target.value}));}}/></label>)}<div className="gg-content-save-all">{status&&<p className={status.type} role="status">{status.message}</p>}<button type="button" disabled={busy} onClick={()=>void saveAll()}>{busy?"Saving all changes…":"Save all changes"}</button></div></div></section>;
 }
 function TypographyEditor({ content, actorId, onSaved }: { content: Record<string,string>; actorId:string; onSaved:()=>Promise<unknown>|void }) {
   const [values,setValues]=useState({ family: content["style.detail.fontFamily"] || "'Google Sans Flex', 'Google Sans', Inter, sans-serif", size: content["style.detail.fontSize"] || "11px", color: content["style.detail.color"] || "#11100e" });

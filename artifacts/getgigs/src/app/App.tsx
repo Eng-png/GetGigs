@@ -15,6 +15,7 @@ import type { AppRole } from "./lib/authTypes";
 import { EMPTY_PROFILE, type BookingProfile } from "./data/bookingProfile";
 import { OPPORTUNITIES, type Opportunity } from "./data/opportunities";
 import { loadArtistProfile, loadPublishedVenues, loadSavedVenueIds, loadSiteContent, recordSearch, saveArtistProfile, setVenueSaved, syncRealVenues, uploadPrivateDocument } from "./lib/getgigsData";
+import { parseVisualTextStyle, visualTextCss } from "./lib/visualContent";
 
 type Section = "explore" | "saved" | "profile" | "community" | "bookers";
 type VisitorMode = "guest";
@@ -151,7 +152,7 @@ export default function App() {
   if (authLoading) return <div className="gg-auth-loading"><span>GetGigs</span><p>Restoring your account…</p></div>;
   if (requestedRole && account && account.role !== requestedRole) return <AccessDenied currentRole={account.role} requestedRole={requestedRole} onBack={() => { window.history.replaceState({}, "", appPath(account.role === "artist" ? "/artist/explore" : account.role === "booker" ? "/booker/discover" : "/admin")); window.location.reload(); }}/>;
 
-  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen title={siteContent["welcome.title"]} description={siteContent["welcome.description"]} onSignUp={() => setAuth({ mode:"signup", role:"artist", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={enterVisitor}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => { if (requestedRole) window.location.replace(appPath("/")); else setAuth(null); }} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
+  if (!accessMode || (requestedRole && !session)) return <><WelcomeScreen title={siteContent["welcome.title"]} description={siteContent["welcome.description"]} titleStyle={visualTextCss(parseVisualTextStyle(siteContent,"welcome.title"),"welcome.title")} descriptionStyle={visualTextCss(parseVisualTextStyle(siteContent,"welcome.description"),"welcome.description")} onSignUp={() => setAuth({ mode:"signup", role:"artist", locked:false })} onLogIn={() => setAuth({ mode:"login", locked:false })} onAdminLogin={() => setAuth({ mode:"login", locked:false, adminLogin:true })} onGuest={enterVisitor}/>{auth && <AuthModal {...auth} signupRole={auth.role} onClose={() => { if (requestedRole) window.location.replace(appPath("/")); else setAuth(null); }} onSwitch={(mode,role) => setAuth({ ...auth, mode, role })} onAuthenticated={() => { setAuth(null); setVisitorMode(null); window.localStorage.removeItem("getgigs-visitor-mode-v1"); }}/>}</>;
 
   if (venuesLoading && account?.role !== "booker") return <div className="gg-auth-loading"><span>GetGigs</span><p>Loading your saved venue photos…</p></div>;
 
